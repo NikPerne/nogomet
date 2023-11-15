@@ -48,7 +48,7 @@ const swaggerDocument = swaggerJsDoc({
         description: "Development server for testing",
       },
       {
-        url: "https://localhost:3000/api",
+        url: "https://fuzball.onrender.com:3000/api",
         description: "Production server",
       },
     ],
