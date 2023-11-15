@@ -1,0 +1,38 @@
+{
+  "name": "demo",
+  "description": "Demo application for Web Development course",
+  "author": "Dejan Lavbič <dejan@lavbic.net>",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "db_local": "node ./data/db-import.js",
+    "import:db-docker": "docker cp ./data/kulturne-dediscine.json web-dev-mongo-db:/kulturne-dediscine.json; docker cp ./data/testni-uporabniki.json web-dev-mongo-db:/testni-uporabniki.json; docker exec -it web-dev-mongo-db mongoimport --db Demo --collection Locations --mode upsert --upsertFields id --jsonArray --file kulturne-dediscine.json;  docker exec -it web-dev-mongo-db mongoimport --db Demo --collection Users --mode upsert --upsertFields email --jsonArray --file testni-uporabniki.json; docker exec -it web-dev-mongo-db rm -rf kulturne-dediscine.json",
+    "delete:db-docker": "docker exec -it web-dev-mongo-db bash -c \"mongosh Demo --eval 'db.Locations.deleteMany({})'; mongosh Demo --eval 'db.Users.deleteMany({})'\"",
+    "view:db-docker": "docker exec -it web-dev-mongo-db bash -c \"mongosh Demo --eval 'db.Locations.find()'; mongosh Demo --eval 'db.Users.find()'\"",
+    "transfer:db-docker-atlas": "docker exec -it web-dev-mongo-db bash -c \"mongodump -h localhost -d Demo -o ./\"; docker exec -it web-dev-mongo-db bash -c \"mongorestore --drop --uri mongodb+srv://app@demo.548y4py.mongodb.net ./Demo/Locations.bson\"; docker exec -it web-dev-mongo-db bash -c \"mongorestore --drop --uri mongodb+srv://app@demo.548y4py.mongodb.net ./Demo/Users.bson\"; docker exec -it web-dev-mongo-db bash -c \"rm -rf ./Demo\"",
+    "test": "mocha test --bail --exit --reporter mochawesome --reporter-options autoOpen=true,reportDir=test/report,reportFilename=report,json=false"
+  },
+  "dependencies": {
+    "axios": "^1.5.1",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "~4.18.2",
+    "express-jwt": "^8.4.1",
+    "hbs": "~4.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^7.5.3",
+    "passport": "^0.6.0",
+    "passport-local": "^1.0.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.0"
+  },
+  "devDependencies": {
+    "chai": "^4.3.10",
+    "chromedriver": "^118.0.1",
+    "mocha": "^10.2.0",
+    "mochawesome": "^7.1.3",
+    "selenium-webdriver": "^4.14.0"
+  }
+}

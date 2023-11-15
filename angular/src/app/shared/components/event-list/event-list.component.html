@@ -1,0 +1,92 @@
+
+<div *ngFor="let event of events">
+
+    <h2>{{event.name}}</h2>
+
+    <p>{{event.description}}</p>
+
+</div>
+<div [ngSwitch]="isLoggedIn()">
+    <a
+      *ngSwitchCase="true"
+      class="btn btn-primary btn-sm"
+      [ngClass]="{ 'disabled': !isConnected() }"
+      (click)="openModal(eventForm)"
+      ><i class="fa-regular fa-comment-dots pe-2"></i
+      ><span>Add Event</span></a
+    >
+    <a
+      *ngSwitchDefault
+      routerLink="/login"
+      class="btn btn-primary btn-sm"
+      [ngClass]="{ 'disabled': !isConnected() }"
+      ><i class="fa-solid fa-right-to-bracket pe-2"></i>Login to create
+      event</a
+    >
+</div>
+<ng-template #eventForm>
+    <div class="modal-header">
+      <h4 class="modal-title pull-left">
+        <i class="fa-regular fa-comment-dots pe-2"></i>Add comment
+      </h4>
+      <button
+        type="button"
+        class="btn-close close pull-right"
+        aria-label="Close"
+        (click)="closeModal()"
+      >
+        <span aria-hidden="true" class="visually-hidden">&times;</span>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="alert alert-dark p-2" [hidden]="!formDataError">
+        <i class="fa-solid fa-triangle-exclamation pe-2"></i>{{ formDataError }}
+      </div>
+      <div class="form-group">
+        <label for="name" class="form-label mt-2">Name of event</label>
+        <textarea
+          id="event"
+          [(ngModel)]="newEvent.name"
+          rows="3"
+          class="form-control form-control-sm"
+          placeholder="Enter name"
+        ></textarea>
+      </div>
+      <div class="form-group">
+        <label for="description" class="form-label mt-2">Description of event</label>
+        <textarea
+          id="event"
+          [(ngModel)]="newEvent.description"
+          rows="3"
+          class="form-control form-control-sm"
+          placeholder="Enter description"
+        ></textarea>
+      </div>
+      <div class="form-group">
+        <label for="date" class="form-label mt-2">Date of event</label>
+        <textarea
+          id="event"
+          [(ngModel)]="newEvent.date"
+          rows="3"
+          class="form-control form-control-sm"
+          placeholder="Enter date"
+        ></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button
+        type="button"
+        class="btn btn-sm btn-secondary"
+        (click)="closeModal()"
+      >
+        <i class="fa-regular fa-circle-xmark me-1"></i>Cancel
+      </button>
+      <button
+        type="button"
+        class="btn btn-sm btn-primary"
+        (click)="createEvent()"
+      >
+        <i class="fa-regular fa-circle-check me-2"></i>Save
+      </button>
+    </div>
+  </ng-template>

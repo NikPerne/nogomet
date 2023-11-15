@@ -1,0 +1,23 @@
+version: "3.5"
+services:
+  web-dev-node-api:
+    container_name: web-dev-app
+    ports:
+      - "3000:3000"
+    image: web-dev-server
+    build: ./
+    environment:
+      - NODE_ENV=test
+    networks:
+      - web-dev-network
+  web-dev-mongo-db:
+    image: mongo
+    container_name: web-dev-mongo-db
+    ports:
+      - "27017-27019:27017-27019"
+    networks:
+      - web-dev-network
+networks:
+  web-dev-network:
+    name: web-dev-network
+    driver: bridge

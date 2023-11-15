@@ -1,0 +1,99 @@
+<nav class="navbar navbar-expand-md navbar-dark bg-primary">
+  <div class="container-fluid">
+    <a class="navbar-brand" routerLink="">
+      <i class="fa-solid fa-map-location-dot me-2"></i><b>Demo</b> app
+    </a>
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarContent"
+      aria-controls="navbarContent"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarContent">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item dropdown">
+          <a
+            class="nav-link dropdown-toggle"
+            data-bs-toggle="dropdown"
+            role="button"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >
+            Information
+          </a>
+          <div class="dropdown-menu">
+            <a
+              class="dropdown-item"
+              target="_blank"
+              href="https://github.com/UL-FRI-DevOps-WebDevelopment/Demo"
+            >
+              Application source code
+            </a>
+            <a
+              class="dropdown-item"
+              target="_blank"
+              href="https://teaching.lavbic.net/DevOps/WebDev/frontend/"
+            >
+              Web Development - frontend course material
+            </a>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item" routerLink="about">About application</a>
+          </div>
+        </li>
+      </ul>
+      <ul class="navbar-nav justify-content-end">
+        <li class="nav-item p-2" *ngIf="!isConnected()">
+          <i class="fa-solid fa-triangle-exclamation text-light"></i>
+        </li>
+        <li class="nav-item dropdown">
+          <a
+            class="nav-link dropdown-toggle"
+            data-bs-toggle="dropdown"
+            role="button"
+            aria-haspopup="true"
+            aria-expanded="false"
+            ><i
+              class="fa-solid me-1"
+              [ngClass]="{
+                'fa-user-ninja': !isLoggedIn(),
+                'fa-user-shield': isLoggedIn()
+              }"
+            ></i
+            >{{ getCurrentUser() }}
+          </a>
+          <div class="dropdown-menu dropdown-menu-end">
+            <a
+              routerLink="login"
+              *ngIf="!isLoggedIn()"
+              class="dropdown-item show-pointer"
+              >Login</a
+            >
+            <a
+              *ngIf="isLoggedIn()"
+              (click)="logout()"
+              class="dropdown-item show-pointer"
+              >Logout</a
+            >
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<main>
+  <div class="container-fluid pt-4 pb-4">
+    <router-outlet></router-outlet>
+    <footer class="mt-5">
+      <div class="row">
+        <div class="col-12">
+          <small>&copy; Web Programming</small>
+        </div>
+      </div>
+    </footer>
+  </div>
+</main>

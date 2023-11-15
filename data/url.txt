@@ -1,0 +1,7 @@
+https://localhost:3000/
+https://localhost:3000/login
+https://localhost:3000/register
+https://localhost:3000/about
+https://localhost:3000/locations/65140319dae53b4c4262d2bc
+https://localhost:3000/locations/65140319dae53b4c4262d52b
+https://localhost:3000/locations/65140319dae53b4c4262da68
