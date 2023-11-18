@@ -6,6 +6,10 @@ import { BrowserModule } from "@angular/platform-browser";
 import { HttpClientModule } from "@angular/common/http";
 import { ModalModule, BsModalService } from "ngx-bootstrap/modal";
 import { RatingModule } from 'ngx-bootstrap/rating';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
 
 import { LocationListComponent } from "./shared/components/location-list/location-list.component";
@@ -26,6 +30,9 @@ import { RegisterComponent } from './shared/components/register/register.compone
 import { LoginComponent } from './shared/components/login/login.component';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { EventListComponent } from './shared/components/event-list/event-list.component';
+import { EventDetailsComponent } from './shared/components/event-details/event-details.component';
+import { DetailsPageEventsComponent } from './shared/components/details-page-events/details-page-events.component';
+import { MostRecentSignupPipe } from './shared/pipes/most-recent-signup.pipe';
 
 @NgModule({
   declarations: [
@@ -44,9 +51,16 @@ import { EventListComponent } from './shared/components/event-list/event-list.co
     RegisterComponent,
     LoginComponent,
     EventListComponent,
+    EventDetailsComponent,
+    DetailsPageEventsComponent,
+    MostRecentSignupPipe,
   ],
   imports: [
     BrowserModule,
+    MatInputModule,
+    MatNativeDateModule,
+    MatFormFieldModule,
+    MatDatepickerModule,
     HttpClientModule,
     AppRoutingModule,
     BrowserAnimationsModule,

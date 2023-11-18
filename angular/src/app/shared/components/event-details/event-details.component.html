@@ -1,0 +1,78 @@
+<div class="row" *ngIf="event">
+  <div [ngClass]="{ 'col-12': true, 'col-md-6': isConnected() }">
+    <div class="card mt-4">
+        <div class="card-header bg-light">
+          <h4 class="mt-1 mb-1">
+            <i class="fa-regular fa-file-lines pe-2"></i>Nogomet
+          </h4>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-12">
+              <h6>Description</h6>
+              <p>{{ event.description }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12">
+      <div class="card mt-4">
+        <div class="card-header bg-light">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h4 class="mt-1 mb-1">
+                <i class="fa-regular fa-comments pe-2"></i>User's SignUps
+              </h4>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div *ngIf="!event.signedup || event.signedup.length == 0">
+            No SignUps yet, please add yours.
+          </div>
+          <div
+            class="mt-2"
+            [ngClass]="!last ? 'mb-4' : ''"
+            *ngFor="
+              let signup of event.signedup | mostRecentSignup;
+              last as last
+            "
+          >
+            <div
+              class="d-flex justify-content-between align-items-baseline bg-light rounded-3 p-1"
+            >
+              <div class="ms-1">
+                <i class="fa-regular fa-user ps-4 pe-2"></i>{{ signup.name
+                }}<i
+                *ngIf="canDeleteSignUp(signup)"
+                class="fa-solid fa-trash-can text-primary show-pointer ms-4"
+                (click)="deleteSignup(signup._id)"
+              ></i>
+              </div>
+              <div>
+                <small>
+                  {{ signup.createdOn | date : "d. MMMM, yyyy" : "CEST" : "sl"
+                  }}<i class="fa-regular fa-calendar ps-2 pe-1"></i>
+                </small>
+              </div>
+              <div class="d-flex flex-row align-items-baseline">
+                <div class="p-2"><i class="far fa-comment-dots"></i></div>
+                <div class="p-2">{{ signup.attending }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+</div>
+  <div class="modal-footer">
+    <button
+      type="button"
+      class="btn btn-sm btn-primary"
+      (click)="signUpForEvent()"
+      [disabled]="isUserSignedUp()"
+    >
+      <i class="fa-regular fa-circle-check me-2"></i>Sign up
+    </button>
+  </div>

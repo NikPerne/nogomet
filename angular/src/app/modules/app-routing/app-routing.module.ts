@@ -4,15 +4,17 @@ import { RouterModule, Routes } from "@angular/router";
 import { HomepageComponent } from "../../shared/components/homepage/homepage.component";
 import { AboutComponent } from "../../shared/components/about/about.component";
 import { DetailsPageComponent } from "../../shared/components/details-page/details-page.component";
-import { RegisterComponent } from "src/app/shared/components/register/register.component";
+import { RegisterComponent } from "../../shared/components/register/register.component";
 import { LoginComponent } from "../../shared/components/login/login.component";
-import { EventListComponent } from "../../shared/components/event-list/event-list.component";
+import { DetailsPageEventsComponent } from "../../shared/components/details-page-events/details-page-events.component";
 import { AuthGuard } from "../../shared/services/auth-guard.service";
+import { EventListComponent } from "../../shared/components/event-list/event-list.component";
 
 const routes: Routes = [
   { path: "", component: HomepageComponent, canActivate: [AuthGuard]},
+  { path: "events", component: EventListComponent, canActivate: [AuthGuard]},
   { path: "about", component: AboutComponent },
-  { path: "events", component: EventListComponent },
+  { path: "events/:eventId", component: DetailsPageEventsComponent, canActivate: [AuthGuard]},
   { path: "locations/:locationId", component: DetailsPageComponent },
   { path: "register", component: RegisterComponent },
   { path: "login", component: LoginComponent },

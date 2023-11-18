@@ -6,7 +6,7 @@
     "start": "ng serve",
     "build": "ng build --output-path build",
     "watch": "ng build --watch --configuration development",
-    "create": "ng generate component event-list"
+    "create": "ng generate pipe most-recent-signup"
   },
   "private": true,
   "dependencies": {
@@ -19,6 +19,8 @@
     "@angular/platform-browser-dynamic": "^16.2.0",
     "@angular/router": "^16.2.0",
     "@angular/service-worker": "^16.2.0",
+    "@mat-datetimepicker/core": "^12.0.1",
+    "@material/form-field": "^14.0.0",
     "bootstrap": "^5.2.3",
     "ngx-bootstrap": "^11.0.2",
     "rxjs": "~7.8.0",
@@ -29,6 +31,6 @@
     "@angular-devkit/build-angular": "^16.2.1",
     "@angular/cli": "~16.2.1",
     "@angular/compiler-cli": "^16.2.0",
-    "typescript": "~5.1.3"
+    "typescript": "^4.9.3"
   }
 }

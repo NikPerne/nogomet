@@ -1,9 +1,9 @@
 import { Signup } from "./signup";
 
 export class Event {
-    _id?: string;
+    _id!: string;
     name!: string;
     description!: string;
     date!: Date;
-    signup?: Signup[];
+    signedup?: Signup[];
 }

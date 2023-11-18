@@ -42,9 +42,9 @@ const jwt = require("jsonwebtoken");
 const usersSchema = new mongoose.Schema({
   email: { type: String, unique: true, required: [true, "Email is required!"] },
   name: { type: String, required: [true, "Name is required!"] },
-  timesSignedUp: {type: Number, default: 0},
   hash: { type: String, required: [true, "Hash is required!"] },
   salt: { type: String, required: [true, "Salt is required!"] },
+  timesSignedUp: {type: Number, default: 0},
 });
 
 usersSchema.methods.setPassword = function (password) {

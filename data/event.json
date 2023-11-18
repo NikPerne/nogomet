@@ -1,0 +1,12 @@
+[
+    {
+      "_id": {
+        "$oid": "6554861db4313bcb049dd667"
+      },
+      "name": "Nogomet",
+      "description": "Testni event za nogomet",
+      "date": {
+        "$date": "2023-11-15T14:20:52.770Z"
+      }
+    }
+]

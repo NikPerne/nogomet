@@ -7,6 +7,22 @@ const allowedCodelists = [
   ];
 
   const eventsList = async (req, res) => {
+    let nResults = parseInt(req.query.nResults);
+    nResults = isNaN(nResults) ? 10 : nResults;
+    try {
+      let events = await Event.aggregate([
+        { $limit: nResults },
+      ]);
+      if (!events || events.length == 0)
+        res.status(404).json({ message: "No events found." });
+      else res.status(200).json(events);
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+
+  };
+
+/*   const eventsList = async (req, res) => {
 
     try {
   
@@ -24,7 +40,7 @@ const allowedCodelists = [
       res.status(500).json({message: err.message});
     }
   
-  };
+  }; */
 
 
 const eventsReadOne = async (req, res) => {
@@ -66,7 +82,7 @@ const eventsCodelist = async (req, res) => {
 
   const createEvent = async (req, res) => {
 
-    const { name, description } = req.body;
+    const { name, description, date } = req.body;
   
     try {
   

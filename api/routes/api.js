@@ -10,6 +10,7 @@ const ctrlLocations = require("../controllers/locations");
 const ctrlComments = require("../controllers/comments");
 const ctrlEvents = require("../controllers/events");
 const ctrlSignup = require("../controllers/signup");
+const ctrlUsers = require("../controllers/users");
 const ctrlAuthentication = require("../controllers/authentication");
 
 /**
@@ -24,15 +25,20 @@ router.get(
 router.get("/locations/:locationId", ctrlLocations.locationsReadOne);
 
 /**
+ * users
+ */
+router.get("/users", ctrlUsers.userList);
+
+/**
  * events
  */
 router.get("/events", ctrlEvents.eventsList);
 router.get("/events/:eventId", ctrlEvents.eventsReadOne);
-router.post(
-  "/events/:eventId/signups",
-  auth,
-  ctrlSignup.signup
-);
+router.post("/events/:eventId/signups", auth, ctrlSignup.signupCreate);
+router
+  .route("/events/:eventId/signups/:signupId")
+  .get(ctrlSignup.SignUpReadOne)
+  .delete(auth, ctrlSignup.signUpDeleteOne);
 router.post("/events", auth, ctrlEvents.createEvent);
 
 /**

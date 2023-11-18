@@ -1,5 +1,6 @@
-import { Component, OnInit, Input, TemplateRef } from '@angular/core';
+import { Component, OnInit, TemplateRef, Inject } from '@angular/core';
 import { BsModalService, BsModalRef } from "ngx-bootstrap/modal";
+
 import { DemoDataService } from "../../services/demo-data.service";
 import { AuthenticationService } from "../../services/authentication.service";
 import { ConnectionService } from "../../services/connection.service";
@@ -19,15 +20,39 @@ export class EventListComponent implements OnInit {
     private authenticationService: AuthenticationService,
     private connectionService: ConnectionService
     ) {}
+  
+    ngOnInit() {
+      this.getEvents();
+    }
+
+    private filterLocations = {
+      nResults: 10,
+    };
+
 
   protected events!: Event[];
   protected newEvent: Event = {
     name: "",
     description: "",
-    date: new Date()
+    date: new Date(),
+    _id: ''
   }
 
-  ngOnInit() {
+  protected message!: string;
+
+  private getEvents = () => {
+    this.message = "Loading nearby events ...";
+    this.demoDataService
+      .getEvents(
+        this.filterLocations.nResults
+      )
+      .subscribe((events) => {
+        this.message = events.length > 0 ? "" : "No events found!";
+        this.events = events;
+      });
+  };
+
+/*    private getEvents = () => {
     this.demoDataService.getEvents(10).subscribe({
       next: (apiEvents: any[]) => {
         this.events = apiEvents.map(apiEvent => {
@@ -42,7 +67,7 @@ export class EventListComponent implements OnInit {
         });
       }
     });
-  }
+  } */
 
   private isFormDataValid(): boolean {
     let isValid = false;
@@ -61,14 +86,16 @@ export class EventListComponent implements OnInit {
       if (this.isFormDataValid()) {
         this.demoDataService.createEvent(this.newEvent).subscribe({
           next: (createdEvent) => {
+            this.getEvents;
             // Add created event to array
-            this.events.unshift(createdEvent);
+            this.events?.unshift(createdEvent);
             // Reload events
             this.demoDataService.getEvents(10);
             // Reset form
             this.newEvent = new Event();
             // Close modal
             this.closeModal();
+            this.getEvents;
           },
           error: (error) => {
             this.formDataError = error;
@@ -92,6 +119,7 @@ export class EventListComponent implements OnInit {
 
   protected closeModal() {
     this.newEvent = {
+      _id: "",
       name: "",
       description: "",
       date: new Date,
