@@ -34,7 +34,7 @@
     <a
       *ngSwitchCase="true"
       class="btn btn-primary btn-sm"
-      [ngClass]="{ 'disabled': !isConnected() || !isAdmin() }"
+      [ngClass]="{ 'hidden': !isConnected() || !isAdmin() }"
       (click)="openModal(eventForm)"
       ><i class="fa-regular fa-comment-dots pe-2"></i
       ><span>Add Event</span></a

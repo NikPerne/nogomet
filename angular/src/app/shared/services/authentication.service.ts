@@ -73,8 +73,17 @@ export class AuthenticationService {
     return user;
   }
 
+  public getUser(): User | null {
+    const userString = localStorage.getItem('currentUser');
+    if (userString) {
+      const user: User = JSON.parse(userString);
+      return user;
+    }
+    return null;
+  }
+
   isAdmin(): boolean {
-    const user = this.getCurrentUser();
+    const user = this.getUser();
     return user?.admin === true || false;
   }
 }
