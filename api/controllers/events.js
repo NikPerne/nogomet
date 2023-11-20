@@ -11,6 +11,8 @@ const allowedCodelists = [
    * /events:
    *   get:
    *     summary: Get a list of events
+   *     tags: [Events]
+   *       - jwt: []
    *     parameters:
    *       - in: query
    *         name: nResults
@@ -47,6 +49,8 @@ const allowedCodelists = [
  * /events/{eventId}:
  *   get:
  *     summary: Get details of a specific event
+ *     tags: [Events]
+ *       - jwt: []
  *     parameters:
  *       - in: path
  *         name: eventId
@@ -83,6 +87,8 @@ const eventsReadOne = async (req, res) => {
  * /events/codelist/{codelist}:
  *   get:
  *     summary: Get values of a specific codelist
+ *     tags: [Events]
+ *       - jwt: []
  *     parameters:
  *       - in: path
  *         name: codelist
@@ -127,7 +133,9 @@ const eventsCodelist = async (req, res) => {
  * /events:
  *   post:
  *     summary: Create a new event
- *     tags: [Authentication]
+ *     tags: [Events]
+ *     security:
+ *      - jwt: []
  *     requestBody:
  *       description: Event details to create
  *       required: true

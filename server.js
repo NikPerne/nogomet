@@ -26,7 +26,7 @@ const swaggerDocument = swaggerJsDoc({
     tags: [
       {
         name: "Events",
-        description: "Events related to cultural heritage.",
+        description: "Events for football recreation",
       },
       {
         name: "Signups",

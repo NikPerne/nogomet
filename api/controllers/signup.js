@@ -19,6 +19,8 @@ const getAuthor = async (req, res, cbResult) => {
  * /events/{eventId}/signups:
  *   post:
  *     summary: Create a new signup for an event
+ *     tags: [Signups]
+ *       - jwt: []
  *     parameters:
  *       - in: path
  *         name: eventId
@@ -100,6 +102,8 @@ const doSignup = async (req, res, event, name) => {
  * /events/{eventId}/signups/{signupId}:
  *   get:
  *     summary: Get details of a specific signup for an event
+ *     tags: [Signups]
+ *       - jwt: []
  *     parameters:
  *       - in: path
  *         name: eventId
@@ -159,6 +163,8 @@ const SignUpReadOne = async (req, res) => {
  * /events/{eventId}/signups/{signupId}:
  *   delete:
  *     summary: Delete a signup for an event
+ *     tags: [Signups]
+ *       - jwt: []
  *     parameters:
  *       - in: path
  *         name: eventId
