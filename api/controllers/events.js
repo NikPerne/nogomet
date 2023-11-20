@@ -12,6 +12,7 @@ const allowedCodelists = [
    *   get:
    *     summary: Get a list of events
    *     tags: [Events]
+   *     security:
    *      - jwt: []
    *     parameters:
    *       - in: query
@@ -50,6 +51,7 @@ const allowedCodelists = [
  *   get:
  *     summary: Get details of a specific event
  *     tags: [Events]
+ *     security:
  *      - jwt: []
  *     parameters:
  *       - in: path
@@ -88,6 +90,7 @@ const eventsReadOne = async (req, res) => {
  *   get:
  *     summary: Get values of a specific codelist
  *     tags: [Events]
+ *     security:
  *      - jwt: []
  *     parameters:
  *       - in: path
