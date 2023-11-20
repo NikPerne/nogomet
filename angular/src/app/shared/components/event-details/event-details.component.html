@@ -66,22 +66,22 @@
         </div>
       </div>
     </div>
-</div>
-  <div class="modal-footer">
-    <button
+  </div>
+    <div class="modal-footer col-md-10">
+      <button
+        type="button"
+        class="btn btn-sm btn-primary"
+        (click)="signUpForEvent()"
+        [disabled]="isUserSignedUp()"
+      >
+        <i class="fa-regular fa-circle-check me-2"></i>Pridem
+      </button>
+      <button
       type="button"
       class="btn btn-sm btn-primary"
-      (click)="signUpForEvent()"
+      (click)="signUpForEventNe()"
       [disabled]="isUserSignedUp()"
     >
-      <i class="fa-regular fa-circle-check me-2"></i>Pridem
+      <i class="fa-regular fa-circle-check me-2"></i>Ne pridem
     </button>
-    <button
-    type="button"
-    class="btn btn-sm btn-primary"
-    (click)="signUpForEventNe()"
-    [disabled]="isUserSignedUp()"
-  >
-    <i class="fa-regular fa-circle-check me-2"></i>Ne pridem
-  </button>
   </div>
