@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build --output-path build",
+    "build": "ng build --output-path build --configuration development",
     "watch": "ng build --watch --configuration development",
     "create": "ng generate pipe most-recent-signup"
   },

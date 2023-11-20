@@ -47,7 +47,7 @@ const swaggerDocument = swaggerJsDoc({
         description: "Development server for testing",
       },
       {
-        url: "https://fuzball.onrender.com/api",
+        url: "https://nogomet.onrender.com/api",
         description: "Production server",
       },
     ],

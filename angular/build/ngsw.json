@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1700475886913,
+  "timestamp": 1700476411378,
   "index": "/index.html",
   "assetGroups": [
     {
@@ -11,13 +11,13 @@
         "ignoreVary": true
       },
       "urls": [
-        "/favicon.ico",
         "/index.html",
-        "/main.1c1839fe53dd5bbc.js",
+        "/main.js",
         "/manifest.webmanifest",
-        "/polyfills.0fa4ec55cb572f2b.js",
-        "/runtime.f8cdbef653ede801.js",
-        "/styles.ae0d61c1bb4441f8.css"
+        "/polyfills.js",
+        "/runtime.js",
+        "/styles.css",
+        "/vendor.js"
       ],
       "patterns": []
     },
@@ -66,7 +66,7 @@
         "https:\\/\\/127\\.0\\.0\\.1:3000\\/.*",
         "http:\\/\\/host\\.docker\\.internal:3000\\/.*",
         "https:\\/\\/host\\.docker\\.internal:3000\\/.*",
-        "https:\\/\\/web-dev\\.fly\\.dev\\/api\\/.*"
+        "https:\\/\\/nogomet\\.onrender\\.com\\/api\\/.*"
       ],
       "strategy": "freshness",
       "maxSize": 20,
@@ -104,13 +104,13 @@
     "/assets/webfonts/fa-solid-900.woff2": "a7fca574d24e9ffa5ee0e0589ffe17277ae4ec27",
     "/assets/webfonts/fa-v4compatibility.ttf": "b12c2b515fb62c370de1af4ca99635b00aabfe58",
     "/assets/webfonts/fa-v4compatibility.woff2": "9e1f957bf329bd280aba89e578420301b312403d",
-    "/favicon.ico": "85e1aa2dc3e91433c21f25d060ec94eee7edda0a",
-    "/index.html": "2ea26ac280fbb48810830a2708f4575a5bf89935",
-    "/main.1c1839fe53dd5bbc.js": "54c9e5690eb98b192cd13fb12d5cb9824326077a",
+    "/index.html": "58fde8b34c23d7b10b581d8dc2d671f0efe562c6",
+    "/main.js": "1d8a01e93c7cb6cc0baa771a0f4bfc42bb9630c4",
     "/manifest.webmanifest": "0d220d2adbdf46d8fb83dacd4563852840d82556",
-    "/polyfills.0fa4ec55cb572f2b.js": "497137d25f1602f3630badffa80e2815f633e298",
-    "/runtime.f8cdbef653ede801.js": "9575f694d065178b803888c53e576fab19c6b237",
-    "/styles.ae0d61c1bb4441f8.css": "20505bda96fb58d2a527eb1f6a28febd169e7cd8"
+    "/polyfills.js": "7f51315a37846c3812fdae09a3e355feba5c6740",
+    "/runtime.js": "d53bae1b7156b8c14895bcd95b43d25cfc3fe860",
+    "/styles.css": "f13f9c57b908d0c7e88ad1e4555f78b9e52b3e03",
+    "/vendor.js": "4e0c79c17ddb0f24dd7ebc61eb4fe8a13d63fe30"
   },
   "navigationUrls": [
     {
