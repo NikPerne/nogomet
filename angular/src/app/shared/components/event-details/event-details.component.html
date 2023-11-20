@@ -58,7 +58,7 @@
               </div>
               <div class="d-flex flex-row align-items-baseline">
                 <div class="p-2"><i class="far fa-comment-dots"></i></div>
-                <div *ngIf="signup.attending == true; else elseBlock">Pridem</div>
+                <div *ngIf="signup.attending == false; else elseBlock">Pridem</div>
                 <ng-template #elseBlock>Ne pridem</ng-template>
               </div>
             </div>
