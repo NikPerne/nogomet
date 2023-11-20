@@ -18,12 +18,20 @@ const swaggerDocument = swaggerJsDoc({
   definition: {
     openapi: "3.0.3",
     info: {
-      title: "Demo",
+      title: "Nogomet",
       version: "0.1.0",
       description:
         "Demo **REST API** used for [DevOps academy - Web development](https://teaching.lavbic.net/DevOps/WebDev/backend) course at [Faculty of Computer and Information Science](https://www.fri.uni-lj.si/en), [University of Ljubljana](https://www.uni-lj.si/eng) given by [Associate Professor Dejan Lavbič](https://www.lavbic.net)!\n\nThe application supports:\n* **filtering nearby** cultural herritage **locations**,\n* **adding comments** to existing locations,\n* and more.",
     },
     tags: [
+      {
+        name: "Events",
+        description: "Events related to cultural heritage.",
+      },
+      {
+        name: "Signups",
+        description: "User signups for events.",
+      },
       {
         name: "Locations",
         description: "Cultural heritage <b>locations</b> in Slovenia.",
