@@ -5,6 +5,7 @@ import { tap } from "rxjs/operators";
 import { User } from "../classes/user";
 import { AuthResponse } from "../classes/auth-response";
 import { DemoDataService } from "./demo-data.service";
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: "root",
@@ -12,7 +13,8 @@ import { DemoDataService } from "./demo-data.service";
 export class AuthenticationService {
   constructor(
     @Inject(BROWSER_STORAGE) private storage: Storage,
-    private demoDataService: DemoDataService
+    private demoDataService: DemoDataService,
+    private router: Router
   ) { }
 
   public login(user: User): Observable<AuthResponse> {
@@ -33,6 +35,7 @@ export class AuthenticationService {
 
   public logout(): void {
     this.storage.removeItem("demo-token");
+    this.router.navigate(['/login']);
   }
 
   public getToken(): string | null {
