@@ -14,11 +14,15 @@ import { Component } from "@angular/core";
     </div>`,
   styles: [],
 })
-export class HomepageComponent {
+
+export class HomepageComponent{
   header = {
-    title: "Nogomet",
+    title: "Nogomet", 
     subtitle: "",
-    sidebar:
-      "Looking for an interesting location nearby? Our application helps you find places to explore when your out and without ideas. Do you have any special requirements? Let our application help you find the place you're looking for.",
+    sidebar: 
+      '',
   };
 }
+
+
+

@@ -65,10 +65,6 @@ import { ConnectionService } from "../../services/connection.service";
           </div>
         </form>
       </div>
-      <app-sidebar
-        class="col-12 col-lg-3 mt-4"
-        [content]="header.sidebar"
-      ></app-sidebar>
     </div>`,
   styles: [],
 })

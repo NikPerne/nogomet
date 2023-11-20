@@ -11,6 +11,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
+import { NgApexchartsModule } from "ng-apexcharts";
 
 import { LocationListComponent } from "./shared/components/location-list/location-list.component";
 import { DistancePipe } from "./shared/pipes/distance.pipe";
@@ -58,6 +59,7 @@ import { MostRecentSignupPipe } from './shared/pipes/most-recent-signup.pipe';
   imports: [
     BrowserModule,
     MatInputModule,
+    NgApexchartsModule,
     MatNativeDateModule,
     MatFormFieldModule,
     MatDatepickerModule,
