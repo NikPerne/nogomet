@@ -14,7 +14,7 @@ const allowedCodelists = [
    *     parameters:
    *       - in: query
    *         name: nResults
-   *         description: Number of results to return (default: 10)
+   *         description: Number of results to return
    *         schema:
    *           type: integer
    *     responses:

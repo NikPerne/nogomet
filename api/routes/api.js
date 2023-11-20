@@ -6,23 +6,10 @@ const auth = jwt({
   userProperty: "payload",
   algorithms: ["HS256"],
 });
-const ctrlLocations = require("../controllers/locations");
-const ctrlComments = require("../controllers/comments");
 const ctrlEvents = require("../controllers/events");
 const ctrlSignup = require("../controllers/signup");
 const ctrlUsers = require("../controllers/users");
 const ctrlAuthentication = require("../controllers/authentication");
-
-/**
- * Locations
- */
-router.get("/locations/distance", ctrlLocations.locationsListByDistance);
-router.get("/locations/search", ctrlLocations.locationsListByMultiFilter);
-router.get(
-  "/locations/codelist/:codelist",
-  ctrlLocations.locationsListCodelist
-);
-router.get("/locations/:locationId", ctrlLocations.locationsReadOne);
 
 /**
  * users
@@ -41,19 +28,6 @@ router
   .delete(auth, ctrlSignup.signUpDeleteOne);
 router.post("/events", auth, ctrlEvents.createEvent);
 
-/**
- * Comments
- */
-router.post(
-  "/locations/:locationId/comments",
-  auth,
-  ctrlComments.commentsCreate
-);
-router
-  .route("/locations/:locationId/comments/:commentId")
-  .get(ctrlComments.commentsReadOne)
-  .put(auth, ctrlComments.commentsUpdateOne)
-  .delete(auth, ctrlComments.commentsDeleteOne);
 
 /**
  * Authentication

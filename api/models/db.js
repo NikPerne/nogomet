@@ -39,6 +39,5 @@ process.on("SIGTERM", () => {
   gracefulShutdown("Cloud-based app shutdown", () => process.exit(0));
 });
 
-require("./locations");
 require('./events');
 require("./users");

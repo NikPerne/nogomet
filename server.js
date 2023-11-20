@@ -33,15 +33,6 @@ const swaggerDocument = swaggerJsDoc({
         description: "User signups for events.",
       },
       {
-        name: "Locations",
-        description: "Cultural heritage <b>locations</b> in Slovenia.",
-      },
-      {
-        name: "Comments",
-        description:
-          "<b>Comments</b> for cultural heritage locations in Slovenia.",
-      },
-      {
         name: "Authentication",
         description: "<b>User management</b> and authentication.",
       },

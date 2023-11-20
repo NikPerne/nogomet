@@ -13,18 +13,12 @@ import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
 import { NgApexchartsModule } from "ng-apexcharts";
 
-import { LocationListComponent } from "./shared/components/location-list/location-list.component";
-import { DistancePipe } from "./shared/pipes/distance.pipe";
 import { FrameworkComponent } from "./shared/components/framework/framework.component";
 import { AboutComponent } from "./shared/components/about/about.component";
 import { HomepageComponent } from "./shared/components/homepage/homepage.component";
 import { HeaderComponent } from "./shared/components/header/header.component";
 import { SidebarComponent } from "./shared/components/sidebar/sidebar.component";
-import { StarsComponent } from "./shared/components/stars/stars.component";
-import { LocationDetailsComponent } from "./shared/components/location-details/location-details.component";
-import { DetailsPageComponent } from "./shared/components/details-page/details-page.component";
 import { AllowUrlPipe } from './shared/pipes/allow-url.pipe';
-import { MostRecentFirstPipe } from './shared/pipes/most-recent-first.pipe';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AppRoutingModule } from "./modules/app-routing/app-routing.module";
 import { RegisterComponent } from './shared/components/register/register.component';
@@ -37,18 +31,12 @@ import { MostRecentSignupPipe } from './shared/pipes/most-recent-signup.pipe';
 
 @NgModule({
   declarations: [
-    LocationListComponent,
-    DistancePipe,
     FrameworkComponent,
     AboutComponent,
     HomepageComponent,
     HeaderComponent,
     SidebarComponent,
-    StarsComponent,
-    LocationDetailsComponent,
-    DetailsPageComponent,
     AllowUrlPipe,
-    MostRecentFirstPipe,
     RegisterComponent,
     LoginComponent,
     EventListComponent,

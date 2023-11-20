@@ -7,9 +7,7 @@ import {
 } from "@angular/common/http";
 import { Observable, throwError } from "rxjs";
 import { catchError, retry } from "rxjs/operators";
-import { Comment } from "../classes/comment";
 import { Event } from "../classes/event";
-import { Location } from "../classes/location";
 import { User } from "../classes/user";
 import { AuthResponse } from "../classes/auth-response";
 import { BROWSER_STORAGE } from "../classes/storage";
@@ -127,55 +125,6 @@ export class DemoDataService {
       .pipe(retry(1), catchError(this.handleError));
   }
 
-  public getLocations(
-    lng: number,
-    lat: number,
-    distance: number,
-    nResults: number
-  ): Observable<Location[]> {
-    const url: string = `${this.apiUrl}/locations/distance?lng=${lng}&lat=${lat}&distance=${distance}&nResults=${nResults}`;
-    return this.http
-      .get<Location[]>(url)
-      .pipe(retry(1), catchError(this.handleError));
-  }
-
-  public getLocationDetails(locationId: string): Observable<Location> {
-    const url: string = `${this.apiUrl}/locations/${locationId}`;
-    return this.http
-      .get<Location>(url)
-      .pipe(retry(1), catchError(this.handleError));
-  }
-
-  public addCommentToLocation(
-    locationId: string,
-    comment: Comment
-  ): Observable<Comment> {
-    const url: string = `${this.apiUrl}/locations/${locationId}/comments`;
-    let body = new HttpParams()
-      .set("author", comment.author)
-      .set("rating", comment.rating)
-      .set("comment", comment.comment);
-    let headers = new HttpHeaders()
-      .set("Content-Type", "application/x-www-form-urlencoded")
-      .set("Authorization", `Bearer ${this.storage.getItem("demo-token")}`);
-    return this.http
-      .post<Comment>(url, body, { headers })
-      .pipe(retry(1), catchError(this.handleError));
-  }
-
-  public deleteCommentFromLocation(
-    locationId: string,
-    commentId: string
-  ): Observable<any> {
-    const url: string = `${this.apiUrl}/locations/${locationId}/comments/${commentId}`;
-    let headers = new HttpHeaders().set(
-      "Authorization",
-      `Bearer ${this.storage.getItem("demo-token")}`
-    );
-    return this.http
-      .delete(url, { headers })
-      .pipe(retry(1), catchError(this.handleError));
-  }
 
   private handleError(error: HttpErrorResponse) {
     return throwError(() => error.error.message || error.statusText);
