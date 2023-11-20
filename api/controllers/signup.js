@@ -68,6 +68,7 @@ const signupCreate = async (req, res) => {
           await author.save();
         }
         else if (!this.event.signedup.attending){
+          await author.save();
         }
       } catch (err) {
         res.status(500).json({ message: err.message });
