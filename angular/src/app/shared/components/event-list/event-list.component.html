@@ -30,9 +30,8 @@
     </div>
   </div>
 </div>
-<div [ngSwitch]="isAdmin()">
+<div *ngIf="isAdmin()">
   <div
-  *ngSwitchCase="true"
   [ngSwitch]="isLoggedIn()">
       <a
         *ngSwitchCase="true"
@@ -50,13 +49,6 @@
         ><i class="fa-solid fa-right-to-bracket pe-2"></i>Login to create
         event</a
       >
-  </div>
-  <div
-  *ngSwitchCase="true"
-  >
-    <a>
-      Admin dodaja dogodke
-    </a>
   </div>
 </div>
 <ng-template #eventForm>

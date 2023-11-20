@@ -137,7 +137,14 @@ export class EventListComponent implements OnInit {
     return this.connectionService.isConnected;
   }
 
-  public isAdmin(): boolean {
-    return this.authenticationService.isAdmin();
+  isAdmin() {
+    switch (this.authenticationService.getCurrentUser()?.admin) {
+      case true:
+        return true;
+      case false:
+        return false;
+      default:
+        return false;
+    }
   }
 }

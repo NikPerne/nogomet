@@ -13,7 +13,7 @@ export class AuthenticationService {
   constructor(
     @Inject(BROWSER_STORAGE) private storage: Storage,
     private demoDataService: DemoDataService
-  ) {}
+  ) { }
 
   public login(user: User): Observable<AuthResponse> {
     return this.demoDataService.login(user).pipe(
@@ -67,14 +67,10 @@ export class AuthenticationService {
       let token: string | null = this.getToken();
       if (token) {
         let { email, name, timesSignedUp, admin } = JSON.parse(this.b64Utf8(token.split(".")[1]));
-        user = { email, name, timesSignedUp, admin};
+        user = { email, name, timesSignedUp, admin };
       }
     }
     return user;
   }
-
-  isAdmin(): boolean {
-    const user = this.getCurrentUser();
-    return user?.admin === true || false;
-  }
 }
+
