@@ -1,11 +1,13 @@
 {
-  "name": "demo",
-  "description": "Demo application for Web Development course",
-  "author": "Dejan Lavbič <dejan@lavbic.net>",
+  "name": "nogomet",
+  "description": "Nogomet app za prijavo za rekereacijo ob torkih nogomet",
+  "author": "Nik Perne <nik.perne@gmail.com>",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "start": "node server.js",
+    "prebuild": "npm run build",
+    "build": "npm install && cd angular && npm run build",
     "db_local": "node ./data/db-import.js",
     "import:db-docker": "docker cp ./data/kulturne-dediscine.json web-dev-mongo-db:/kulturne-dediscine.json; docker cp ./data/testni-uporabniki.json web-dev-mongo-db:/testni-uporabniki.json; docker exec -it web-dev-mongo-db mongoimport --db Demo --collection Locations --mode upsert --upsertFields id --jsonArray --file kulturne-dediscine.json;  docker exec -it web-dev-mongo-db mongoimport --db Demo --collection Users --mode upsert --upsertFields email --jsonArray --file testni-uporabniki.json; docker exec -it web-dev-mongo-db rm -rf kulturne-dediscine.json",
     "delete:db-docker": "docker exec -it web-dev-mongo-db bash -c \"mongosh Demo --eval 'db.Locations.deleteMany({})'; mongosh Demo --eval 'db.Users.deleteMany({})'\"",
