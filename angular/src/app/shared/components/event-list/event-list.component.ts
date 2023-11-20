@@ -145,6 +145,6 @@ export class EventListComponent implements OnInit {
   }
 
   isAdmin(user: User): boolean {
-    return this.isLoggedIn() && this.getCurrentUser() === user.admin;
+    return this.getCurrentUser() === user.admin;
   }
 }

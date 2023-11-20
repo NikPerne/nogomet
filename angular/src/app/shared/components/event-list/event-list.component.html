@@ -29,7 +29,7 @@
     </div>
   </div>
 </div>
-<div *ngIf="user.admin == true; else elseBlock">admin lahko dodaja dogodke</div>
+<div *ngIf="getCurrentUser(); else elseBlock">admin lahko dodaja dogodke</div>
 <ng-template #elseBlock>
   <div
   [ngSwitch]="isLoggedIn()">
