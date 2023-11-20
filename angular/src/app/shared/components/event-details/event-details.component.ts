@@ -30,7 +30,7 @@ export class EventDetailsComponent {
   protected newSignupNe: Signup = {
     name: "",
     createdOn: new Date(),
-    attending: true,
+    attending: false,
   };
 
   public isConnected(): boolean {
@@ -55,7 +55,7 @@ export class EventDetailsComponent {
   protected signUpForEventNe() {
     this.newSignupNe.name = this.getCurrentUser();
     this.demoDataService
-      .signUpForEventNe(this.event._id, this.newSignupNe)
+      .signUpForEvent(this.event._id, this.newSignupNe)
       .subscribe({
         next: (signedUp: Signup) => {
           this.event?.signedup?.unshift(signedUp);
