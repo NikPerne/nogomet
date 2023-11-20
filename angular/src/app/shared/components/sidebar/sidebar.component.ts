@@ -19,7 +19,19 @@ export type ChartOptions = {
 
 @Component({
   selector: "app-sidebar",
-  template: `<apx-chart [series]="chartOptions.series" [chart]="chartOptions.chart"[dataLabels]="chartOptions.dataLabels" [plotOptions]="chartOptions.plotOptions"[xaxis]="chartOptions.xaxis"></apx-chart>`,
+  template: `<apx-chart [series]="chartOptions.series" [chart]="chartOptions.chart"[dataLabels]="chartOptions.dataLabels" [plotOptions]="chartOptions.plotOptions"[xaxis]="chartOptions.xaxis"></apx-chart><br><br><div class="ratio ratio-4x3">
+  <iframe
+    title="Zamljevid"
+    [src]="
+      'https://maps.google.com/maps?q=' +
+      46.23252015745447 +
+        ',' +
+        14.341686964948316 +
+        '&z=15&output=embed' | allowUrl
+    "
+    class="rounded-3"
+  ></iframe>
+</div>`,
   styles: [],
 })
 export class SidebarComponent implements OnInit {

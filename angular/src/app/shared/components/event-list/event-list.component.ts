@@ -140,10 +140,13 @@ export class EventListComponent implements OnInit {
   isAdmin() {
     switch (this.authenticationService.getCurrentUser()?.admin) {
       case true:
+        console.log(this.authenticationService.getCurrentUser()?.admin);
         return true;
       case false:
+        console.log(this.authenticationService.getCurrentUser()?.admin);
         return false;
       default:
+        console.log(this.authenticationService.getCurrentUser()?.admin);
         return false;
     }
   }
