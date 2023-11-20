@@ -66,10 +66,15 @@ export class AuthenticationService {
     if (this.isLoggedIn()) {
       let token: string | null = this.getToken();
       if (token) {
-        let { email, name, timesSignedUp } = JSON.parse(this.b64Utf8(token.split(".")[1]));
-        user = { email, name, timesSignedUp, };
+        let { email, name, timesSignedUp, admin } = JSON.parse(this.b64Utf8(token.split(".")[1]));
+        user = { email, name, timesSignedUp, admin};
       }
     }
     return user;
+  }
+
+  isAdmin(): boolean {
+    const user = this.getCurrentUser();
+    return user && user.admin? true : false;
   }
 }

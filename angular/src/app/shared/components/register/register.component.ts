@@ -82,6 +82,7 @@ export class RegisterComponent {
     timesSignedUp: 0,
     email: "",
     password: "",
+    admin: false,
   };
   public header = {
     title: "Create a new account",

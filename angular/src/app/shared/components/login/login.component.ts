@@ -12,7 +12,7 @@ import { ConnectionService } from "../../services/connection.service";
   selector: "app-login",
   template: `<app-header [content]="header"></app-header>
     <div class="row">
-      <div class="col-12 col-md-8">
+      <div class="col-12 col-md-2">
         <p>
           Not a member? Please
           <a routerLink="/register" class="link-primary">register</a> first.
@@ -75,6 +75,7 @@ export class LoginComponent {
     name: "",
     email: "",
     password: "",
+    admin: false,
   };
   public header = {
     title: "Sign in",

@@ -136,4 +136,8 @@ export class EventListComponent implements OnInit {
     if (!this.connectionService.isConnected) this.closeModal();
     return this.connectionService.isConnected;
   }
+
+  public isAdmin(): boolean {
+    return this.authenticationService.isAdmin();
+  }
 }
