@@ -30,7 +30,7 @@
     </div>
   </div>
 </div>
-<div *ngIf="isAdmin()">
+
   <div
   [ngSwitch]="isLoggedIn()">
       <a
@@ -50,7 +50,7 @@
         event</a
       >
   </div>
-</div>
+
 <ng-template #eventForm>
     <div class="modal-header">
       <h4 class="modal-title pull-left">

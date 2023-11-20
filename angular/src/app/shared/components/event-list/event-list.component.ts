@@ -5,6 +5,7 @@ import { DemoDataService } from "../../services/demo-data.service";
 import { AuthenticationService } from "../../services/authentication.service";
 import { ConnectionService } from "../../services/connection.service";
 import { Event } from "../../classes/event";
+import { User } from "../../classes/user";
 
 @Component({
   selector: 'app-event-list',
@@ -137,17 +138,12 @@ export class EventListComponent implements OnInit {
     return this.connectionService.isConnected;
   }
 
-  isAdmin() {
-    switch (this.authenticationService.getCurrentUser()?.admin) {
-      case true:
-        console.log(this.authenticationService.getCurrentUser()?.admin);
-        return true;
-      case false:
-        console.log(this.authenticationService.getCurrentUser()?.admin);
-        return false;
-      default:
-        console.log(this.authenticationService.getCurrentUser()?.admin);
-        return false;
-    }
+  public getCurrentUser(): boolean {
+    const user: User | null = this.authenticationService.getCurrentUser();
+    return user ? user.admin : false;
+  }
+
+  isAdmin(user: User): boolean {
+    return this.isLoggedIn() && this.getCurrentUser() === user.admin;
   }
 }

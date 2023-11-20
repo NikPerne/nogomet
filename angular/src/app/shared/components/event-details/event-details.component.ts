@@ -21,7 +21,13 @@ export class EventDetailsComponent {
 
   @Input() event!: Event;
 
-  protected newSignup: Signup = {
+  protected newSignupPridem: Signup = {
+    name: "",
+    createdOn: new Date(),
+    attending: true,
+  };
+
+  protected newSignupNe: Signup = {
     name: "",
     createdOn: new Date(),
     attending: true,
@@ -33,9 +39,23 @@ export class EventDetailsComponent {
   }
 
   protected signUpForEvent() {
-    this.newSignup.name = this.getCurrentUser();
+    this.newSignupPridem.name = this.getCurrentUser();
     this.demoDataService
-      .signUpForEvent(this.event._id, this.newSignup)
+      .signUpForEvent(this.event._id, this.newSignupPridem)
+      .subscribe({
+        next: (signedUp: Signup) => {
+          this.event?.signedup?.unshift(signedUp);
+        },
+          error: (err) => {
+          "Error adding signup.";
+        },
+    });
+  }
+
+  protected signUpForEventNe() {
+    this.newSignupNe.name = this.getCurrentUser();
+    this.demoDataService
+      .signUpForEvent(this.event._id, this.newSignupNe)
       .subscribe({
         next: (signedUp: Signup) => {
           this.event?.signedup?.unshift(signedUp);
