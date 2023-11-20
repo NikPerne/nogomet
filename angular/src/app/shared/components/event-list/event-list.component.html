@@ -30,23 +30,34 @@
     </div>
   </div>
 </div>
-<div [ngSwitch]="isLoggedIn()">
-    <a
-      *ngSwitchCase="true"
-      class="btn btn-primary btn-sm"
-      [ngClass]="{ 'disabled': !isConnected() || !isAdmin() }"
-      (click)="openModal(eventForm)"
-      ><i class="fa-regular fa-comment-dots pe-2"></i
-      ><span>Add Event</span></a
-    >
-    <a
-      *ngSwitchDefault
-      routerLink="/login"
-      class="btn btn-primary btn-sm"
-      [ngClass]="{ 'disabled': !isConnected() }"
-      ><i class="fa-solid fa-right-to-bracket pe-2"></i>Login to create
-      event</a
-    >
+<div [ngSwitch]="isAdmin()">
+  <div
+  *ngSwitchCase="true"
+  [ngSwitch]="isLoggedIn()">
+      <a
+        *ngSwitchCase="true"
+        class="btn btn-primary btn-sm"
+        [ngClass]="{ 'disabled': !isConnected() }"
+        (click)="openModal(eventForm)"
+        ><i class="fa-regular fa-comment-dots pe-2"></i
+        ><span>Add Event</span></a
+      >
+      <a
+        *ngSwitchDefault
+        routerLink="/login"
+        class="btn btn-primary btn-sm"
+        [ngClass]="{ 'disabled': !isConnected() }"
+        ><i class="fa-solid fa-right-to-bracket pe-2"></i>Login to create
+        event</a
+      >
+  </div>
+  <div
+  *ngSwitchCase="true"
+  >
+    <a>
+      Admin dodaja dogodke
+    </a>
+  </div>
 </div>
 <ng-template #eventForm>
     <div class="modal-header">
