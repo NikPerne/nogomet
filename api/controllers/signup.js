@@ -63,8 +63,13 @@ const signupCreate = async (req, res) => {
           .select("signedup")
           .exec();
         doSignup(req, res, event, author.name);
-        author.timesSignedUp++;
-        await author.save();
+        if (event.signedup.attending == true){
+          author.timesSignedUp++;
+          await author.save();
+        }
+        else if (event.signedup.attending == false){
+          await author.save();
+        }
       } catch (err) {
         res.status(500).json({ message: err.message });
       }
@@ -212,10 +217,16 @@ const signUpDeleteOne = async (req, res) => {
               });
             } else {
               signup.deleteOne();
-              author.timesSignedUp--;
-              await author.save();
-              await event.save();
-              res.status(204).send();
+              if (signup.attending == true) {
+                author.timesSignedUp--;
+                await author.save();
+                await event.save();
+                res.status(204).send();
+              }
+              else if (signup.attending == false) {
+                await event.save();
+                res.status(204).send();
+              }
             }
           });
         }
