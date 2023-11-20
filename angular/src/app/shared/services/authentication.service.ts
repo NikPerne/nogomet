@@ -75,6 +75,6 @@ export class AuthenticationService {
 
   isAdmin(): boolean {
     const user = this.getCurrentUser();
-    return user && user.admin? true : false;
+    return user?.admin === true || false;
   }
 }
