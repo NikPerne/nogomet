@@ -32,6 +32,7 @@ export class EventListComponent implements OnInit {
 
 
   protected events!: Event[];
+  protected user!: User;
   protected newEvent: Event = {
     name: "",
     description: "",

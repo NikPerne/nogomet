@@ -4,7 +4,7 @@ import { Component } from "@angular/core";
   selector: "app-homepage",
   template: `<app-header [content]="header"></app-header>
     <div class="row">
-      <div class="col-12 col-md-8">
+      <div class="col-12 col-md-4">
         <app-event-list></app-event-list>
       </div>
       <app-sidebar

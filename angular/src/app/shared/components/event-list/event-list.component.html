@@ -29,7 +29,8 @@
     </div>
   </div>
 </div>
-
+<div *ngIf="user.admin == true; else elseBlock">admin lahko dodaja dogodke</div>
+<ng-template #elseBlock>
   <div
   [ngSwitch]="isLoggedIn()">
       <a
@@ -49,7 +50,7 @@
         event</a
       >
   </div>
-
+</ng-template>
 <ng-template #eventForm>
     <div class="modal-header">
       <h4 class="modal-title pull-left">
