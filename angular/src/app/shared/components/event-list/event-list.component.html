@@ -4,29 +4,28 @@
     <i class="fa-solid fa-triangle-exclamation pe-2"></i>{{ message }}
   </div>
 </div>
-<div *ngFor="let event of events">
+<div>
   <div class="card mt-4">
     <div class="card-header bg-light">
       <div class="d-flex justify-content-between align-items-center">
         <div>
           <h4 class="mt-1 mb-1">
             <a
-              [routerLink]="['/events', event._id]"
               class="link-primary text-decoration-none"
               ><i class="fa-solid fa-location-dot me-2"></i
-              >{{ event.name }}</a
+              >Nogomet</a
             >
           </h4>
         </div>
       </div>
     </div>
-    <div class="card-body">
-      <p>
-        {{ event.description }}
-      </p>
-      <p class="mb-0">
-        <small class="text-muted">{{ event.date | date : "d. MMMM, yyyy" : "CEST" : "sl" }}</small>
-      </p>
+    <div *ngFor="let event of events" class="card-body">
+      <a
+        [routerLink]="['/events', event._id]"
+        class="link-primary text-decoration-none"
+        ><i class="fa-solid fa-location-dot me-2"></i
+        >{{ event.date | date : "d. MMMM, yyyy" : "CEST" : "sl" }}</a
+      >
     </div>
   </div>
 </div>

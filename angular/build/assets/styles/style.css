@@ -27,3 +27,7 @@ h5,
 h6 {
   font-family: "Black Ops One", sans-serif;
 }
+
+button{
+  margin:5px;
+}
