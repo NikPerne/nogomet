@@ -6,40 +6,37 @@ import { Component } from "@angular/core";
     <div class="row">
       <div class="col-12 col-lg-8">
         <p>
-          Even though we have more activities and information serving our days
-          than ever before – work, family, friends, travel, the internet, books,
-          movies – boredom is still a part of life. If you’ve found yourself
-          staring blankly at a wall or failing to come up with something to fill
-          your time, you’ve experienced boredom. We created a demo app to help
-          you drive away boredom, a widespread feeling.
+          # O aplikaciji Nogomet
+
+          Dobrodošli v aplikaciji Nogomet, kjer se lahko enostavno prijavite in sledite statistikam vseh uporabnikov, ki so se prijavili na rekreativno igranje nogometa.
+          
+          ## Kako deluje?
+          
+          ### 1. Prijavite se na dogodek
+          
+          Poiščite želeni nogometni dogodek in se prijavite z nekaj preprostimi kliki. Izbirate lahko med različnimi dogodki, ki jih organizirajo in ustvarjajo uporabniki v skupnosti.
+          
+          ### 2. Spremljajte statistike
+          
+          Ogledajte si statistike vseh uporabnikov, ki so se prijavili na isti dogodek. Sledite številu prijav, spremljajte, kako pogosto sodelujejo in si oglejte druge zanimive informacije, povezane z rekreativnim igranjem nogometa.
+          
+          ### 3. Sodelujte v skupnosti
+          
+          Poleg prijav na dogodke lahko sodelujete tudi v skupnosti. Delite svoje izkušnje, objavljajte fotografije, komunicirajte z drugimi ljubitelji nogometa in gradite povezave v tej dinamični skupnosti.
+          
+          ## Zakaj Nogomet?
+          
+          - Enostavna prijava na nogometne dogodke.
+          - Pregledna statistika sodelujočih uporabnikov.
+          - Možnost interakcije in komunikacije v skupnosti.
+          - Raznovrstnost dogodkov za vse ljubitelje nogometa.
+          
+          Nogomet je ustvarjen za navdušence, ki želijo združiti ljubezen do nogometa s prijetnim druženjem in športno aktivnostjo. Pridružite se nam in postanite del te vznemirljive nogometne skupnosti!
+          
+          ---
+          
+          **Nogomet - Za vse, ki ljubijo igranje in spremljanje nogometa!**
         </p>
-        <p>
-          Here are rounded up some quotes about being bored. These aren’t dull
-          quotes; they’re interesting ones that reveal the many different
-          aspects of boredom.
-        </p>
-        <figure>
-          <blockquote>
-            "Is life not a thousand times too short for us to bore ourselves?"
-          </blockquote>
-          <figcaption class="blockquote-footer">Friedrich Nietzsche</figcaption>
-        </figure>
-        <figure>
-          <blockquote>
-            "There are no uninteresting things, only uninterested people."
-          </blockquote>
-          <figcaption class="blockquote-footer">G. K. Chesterton</figcaption>
-        </figure>
-        <figure>
-          <blockquote>
-            "People say nothing is impossible, but I do nothing every day."
-          </blockquote>
-          <figcaption class="blockquote-footer">A. A. Milne</figcaption>
-        </figure>
-        <figure>
-          <blockquote>"Stay hungy, stay foolish."</blockquote>
-          <figcaption class="blockquote-footer">Steve Jobs</figcaption>
-        </figure>
       </div>
     </div>`,
   styles: [],

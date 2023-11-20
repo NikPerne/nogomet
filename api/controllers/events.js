@@ -127,28 +127,14 @@ const eventsCodelist = async (req, res) => {
  * /events:
  *   post:
  *     summary: Create a new event
+ *     tags: [Authentication]
  *     requestBody:
  *       description: Event details to create
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *                 description: Name of the event
- *               description:
- *                 type: string
- *                 description: Description of the event
- *               date:
- *                 type: string
- *                 format: date-time
- *                 description: Date of the event
- *             required:
- *               - name
- *               - description
- *               - date
+ *             $ref: '#/components/schemas/Event'
  *     responses:
  *       '201':
  *         description: Successful response with the created event

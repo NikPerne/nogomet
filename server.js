@@ -21,7 +21,7 @@ const swaggerDocument = swaggerJsDoc({
       title: "Nogomet",
       version: "0.1.0",
       description:
-        "Demo **REST API** used for [DevOps academy - Web development](https://teaching.lavbic.net/DevOps/WebDev/backend) course at [Faculty of Computer and Information Science](https://www.fri.uni-lj.si/en), [University of Ljubljana](https://www.uni-lj.si/eng) given by [Associate Professor Dejan Lavbič](https://www.lavbic.net)!\n\nThe application supports:\n* **filtering nearby** cultural herritage **locations**,\n* **adding comments** to existing locations,\n* and more.",
+        "Nogomet **REST API** used for [DevOps academy - Web development](https://teaching.lavbic.net/DevOps/WebDev/backend) course at [Faculty of Computer and Information Science](https://www.fri.uni-lj.si/en), [University of Ljubljana](https://www.uni-lj.si/eng) given by [Associate Professor Dejan Lavbič](https://www.lavbic.net)!\n\nThe application supports:\n* **Adding** events,\n* **adding signups** to existing events,\n* and more.",
     },
     tags: [
       {
@@ -64,14 +64,12 @@ const swaggerDocument = swaggerJsDoc({
         Codelist: {
           type: "string",
           description:
-            "Allowed values for the codelist used in filtering locations.",
+            "Allowed values for the codelist used in events.",
           enum: [
-            "category",
-            "type",
-            "keywords",
-            "institution",
-            "municipality",
-            "fields",
+            "name",
+            "description",
+            "date",
+            "signups",
           ],
         },
         ErrorMessage: {
