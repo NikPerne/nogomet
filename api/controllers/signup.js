@@ -63,11 +63,11 @@ const signupCreate = async (req, res) => {
           .select("signedup")
           .exec();
         doSignup(req, res, event, author.name);
-        if (event.signedup.attending){
+        if (this.event.signedup.attending){
           author.timesSignedUp++;
           await author.save();
         }
-        else if (!event.signedup.attending){
+        else if (!this.event.signedup.attending){
         }
       } catch (err) {
         res.status(500).json({ message: err.message });
