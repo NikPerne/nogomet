@@ -84,7 +84,7 @@ const doSignup = async (req, res, event, name) => {
   else {
     event.signedup.push({
       name: name,
-      attending: true,
+      attending: req.body.attending,
     });
     try {
       await event.save();

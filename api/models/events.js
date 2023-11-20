@@ -31,7 +31,7 @@ const mongoose = require("mongoose");
 const signupSchema = new mongoose.Schema({
   name: { type: String, required: [true, "Name is required!"] },
   attending: {
-    type: Boolean,
+    type: Boolean
   },
   createdOn: { type: Date, default: Date.now },
 });

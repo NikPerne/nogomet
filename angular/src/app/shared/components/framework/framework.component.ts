@@ -1,7 +1,6 @@
 import { Component } from "@angular/core";
 import { User } from "../../classes/user";
 import { AuthenticationService } from "../../services/authentication.service";
-import { HistoryService } from "../../services/history.service";
 import { ConnectionService } from "../../services/connection.service";
 
 @Component({
@@ -12,7 +11,6 @@ import { ConnectionService } from "../../services/connection.service";
 export class FrameworkComponent {
   constructor(
     private authenticationService: AuthenticationService,
-    private historyService: HistoryService,
     private connectionService: ConnectionService
   ) {}
 
