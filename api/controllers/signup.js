@@ -72,6 +72,28 @@ const signupCreate = async (req, res) => {
   });
 };
 
+const signupCreateNe = async (req, res) => {
+  getAuthor(req, res, async (req, res, author) => {
+    const { eventId } = req.params;
+    if (!eventId)
+      res
+        .status(400)
+        .json({ message: "Path parameter 'locationId' is required." });
+    else {
+      try {
+        let event = await Event.findById(eventId)
+          .select("signedup")
+          .exec();
+        doSignup(req, res, event, author.name);
+        author.timesSignedUp++;
+        await author.save();
+      } catch (err) {
+        res.status(500).json({ message: err.message });
+      }
+    }
+  });
+};
+
 const doSignup = async (req, res, event, name) => {
   if (!event)
     res.status(404).json({
@@ -84,7 +106,30 @@ const doSignup = async (req, res, event, name) => {
   else {
     event.signedup.push({
       name: name,
-      attending: req.body.attending,
+      attending: true,
+    });
+    try {
+      await event.save();
+      res.status(201).json(event.signedup.slice(-1).pop());
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+};
+
+const doSignupNe = async (req, res, event, name) => {
+  if (!event)
+    res.status(404).json({
+      message: `Event with id '${req.params.eventId}' not found.`,
+    });
+  else if (!req.body.attending)
+    res.status(400).json({
+      message: "Body parameters 'attending' required",
+    });
+  else {
+    event.signedup.push({
+      name: name,
+      attending: false,
     });
     try {
       await event.save();
@@ -230,4 +275,5 @@ module.exports = {
   signupCreate,
   signUpDeleteOne,
   SignUpReadOne,
+  signupCreateNe,
 };

@@ -89,6 +89,22 @@ export class DemoDataService {
       .pipe(retry(1), catchError(this.handleError));
   }
 
+  public signUpForEventNe(
+    eventId: string,
+    signup: Signup
+  ): Observable<Signup> {
+    const url: string = `${this.apiUrl}/events/${eventId}/signupsne`;
+    let body = new HttpParams()
+      .set("name", signup.name)
+      .set("attending", signup.attending);
+    let headers = new HttpHeaders()
+      .set("Content-Type", "application/x-www-form-urlencoded")
+      .set("Authorization", `Bearer ${this.storage.getItem("demo-token")}`);
+    return this.http
+      .post<Signup>(url, body, { headers })
+      .pipe(retry(1), catchError(this.handleError));
+  }
+
   createEvent(
     event: Event,
     ): Observable<Event> {

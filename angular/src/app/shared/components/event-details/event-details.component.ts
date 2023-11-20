@@ -55,7 +55,7 @@ export class EventDetailsComponent {
   protected signUpForEventNe() {
     this.newSignupNe.name = this.getCurrentUser();
     this.demoDataService
-      .signUpForEvent(this.event._id, this.newSignupNe)
+      .signUpForEventNe(this.event._id, this.newSignupNe)
       .subscribe({
         next: (signedUp: Signup) => {
           this.event?.signedup?.unshift(signedUp);

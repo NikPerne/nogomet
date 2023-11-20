@@ -22,6 +22,7 @@ router.get("/users", ctrlUsers.userList);
 router.get("/events", ctrlEvents.eventsList);
 router.get("/events/:eventId", ctrlEvents.eventsReadOne);
 router.post("/events/:eventId/signups", auth, ctrlSignup.signupCreate);
+router.post("/events/:eventId/signupne", auth, ctrlSignup.signupCreateNe);
 router
   .route("/events/:eventId/signups/:signupId")
   .get(ctrlSignup.SignUpReadOne)
