@@ -1,20 +1,19 @@
 [
   {
+    "timesSignedUp": 0,
     "name": "Dejan Lavbič",
     "email": "dejan@lavbic.net",
     "salt": "9981a3df943d041cf3e9d69332e3c87a",
-    "hash": "177251e9308fdddfc52298964b2b0ad504351c9fd0090b81ca00bee3348ab23c84055f19126a1497a7f5eaf1e6d6780925a7824bc1c534d44f942a287211cf2c"
+    "hash": "177251e9308fdddfc52298964b2b0ad504351c9fd0090b81ca00bee3348ab23c84055f19126a1497a7f5eaf1e6d6780925a7824bc1c534d44f942a287211cf2c",
+    "admin": false
   },
   {
-    "_id": {
-      "$oid": "655af835e5496ee52229a798"
-    },
-    "timesSignedUp": 1,
+    "timesSignedUp": 0,
     "name": "Nik Perne",
     "email": "nik.perne@gmail.com",
     "salt": "96da04c11bb5c328f6378030aa85879f",
     "hash": "146e3528e829bae0aa35936db4b0dc246cf00a670e67a4c4dc946be7aeb306111fc7060c2cb2e984338765e8c30b10bd862ff581dbc41f6f7d4791419d7ac644",
     "__v": 0,
-    "admin": false
+    "admin": true
   }
 ]

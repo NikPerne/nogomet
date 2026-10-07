@@ -4,9 +4,8 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "npm install && ng build --output-path build --configuration production",
-    "watch": "ng build --watch --configuration development",
-    "create": "ng generate pipe most-recent-signup"
+    "build": "ng build --output-path build --configuration development",
+    "build-prod": "npm install && ng build --output-path build --configuration production"
   },
   "private": true,
   "dependencies": {

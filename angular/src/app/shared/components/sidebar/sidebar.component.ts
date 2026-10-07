@@ -33,9 +33,9 @@ export type ChartOptions = {
     title="Zamljevid"
     [src]="
       'https://maps.google.com/maps?q=' +
-      46.23252015745447 +
+        46.232536 +
         ',' +
-        14.341686964948316 +
+        14.34166 +
         '&z=15&output=embed' | allowUrl
     "
     class="rounded-3"
@@ -55,8 +55,8 @@ export class SidebarComponent implements OnInit {
     }],
     chart: {
       type: "bar",
-      height: 350,
-      width: 500,
+      height: 150,
+      width: 300,
     },
     plotOptions: {
       bar: {

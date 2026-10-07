@@ -27,6 +27,14 @@ router
   .get(ctrlSignup.SignUpReadOne)
   .delete(auth, ctrlSignup.signUpDeleteOne);
 router.post("/events", auth, ctrlEvents.createEvent);
+router.put('/events/:id', auth, async (req, res) => {
+  try {
+    const updatedEvent = await ctrlEvents.updateEvent(req.params.id, req.body);
+    res.json(updatedEvent);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
 
 
 /**

@@ -6,4 +6,5 @@ export class Event {
     description!: string;
     date!: Date;
     signedup?: Signup[];
+    pridemCount?: number;
 }

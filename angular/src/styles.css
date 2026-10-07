@@ -1,3 +1,11 @@
 .show-pointer {
   cursor: pointer;
 }
+
+.pridem-text {
+  color: green; /* Change this to whatever color you want for pridem */
+}
+
+.nepridem-text {
+  color: red; /* Change this to whatever color you want for ne pridem */
+}

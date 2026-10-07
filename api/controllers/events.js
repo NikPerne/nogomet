@@ -18,6 +18,7 @@ const allowedCodelists = [
    *       - in: query
    *         name: nResults
    *         description: Number of results to return
+   *         example: 5
    *         schema:
    *           type: integer
    *     responses:
@@ -45,6 +46,19 @@ const allowedCodelists = [
 
   };
 
+  const updateEvent = async (eventId, updatedEventData) => {
+    try {
+      const updatedEvent = await Event.findByIdAndUpdate(
+        eventId,
+        updatedEventData,
+        { new: true }
+      );
+      return updatedEvent;
+    } catch (err) {
+      throw new Error(err.message);
+    }
+  };
+
   /**
  * @openapi
  * /events/{eventId}:
@@ -57,6 +71,7 @@ const allowedCodelists = [
  *       - in: path
  *         name: eventId
  *         description: ID of the event to retrieve
+ *         example: 655b4c518bfcc3e808a86762
  *         schema:
  *           type: string
  *     responses:
@@ -72,6 +87,7 @@ const eventsReadOne = async (req, res) => {
   try {
     let event = await Event.findById(req.params.eventId)
       .select("-id")
+      .populate('signedup')
       .exec();
     if (!event)
       res.status(404).json({
@@ -143,7 +159,7 @@ const eventsCodelist = async (req, res) => {
  *       description: Event details to create
  *       required: true
  *       content:
- *         application/json:
+ *         application/x-www-form-urlencoded:
  *           schema:
  *             $ref: '#/components/schemas/Event'
  *     responses:
@@ -182,4 +198,5 @@ module.exports = {
     eventsCodelist,
     eventsReadOne,
     createEvent,
+    updateEvent,
   };

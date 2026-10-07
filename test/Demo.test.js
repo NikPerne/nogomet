@@ -1,3 +1,5 @@
+const { assert } = require("console");
+
 /**
  * Functional tests
  */
@@ -15,7 +17,7 @@
    * Parameters
    */
   let applicationUrl = "https://host.docker.internal:3000/";
-  let seleniumServerUrl = "http://127.0.0.1:4445/wd/hub";
+  let seleniumServerUrl = "http://localhost:4445/wd/hub";
   let browser, jwtToken;
   const axios = require("axios").create({
     baseURL: applicationUrl + "api/",
@@ -53,20 +55,13 @@
         )
         .usingServer(seleniumServerUrl)
         .build();
-      await browser.manage().setTimeouts({ implicit: 30 * 1000 });
+      await browser.manage().setTimeouts({ implicit: 40 * 1000 });
     });
-    describe("Location list", () => {
+    describe("About application", () => {
       before(async () => {
         await browser.get(applicationUrl);
         await confirmHttpsException(browser);
       });
-
-      it("number of locations on the home page", async () => {
-        let locations = await browser.findElements(By.css(".card"));
-        expect(locations).to.be.an("array").to.have.lengthOf(10);
-      });
-    });
-    describe("About application", () => {
       before(async () => await browser.get(applicationUrl));
       it("select about application", async () => {
         let link = await browser.findElement(
@@ -75,7 +70,7 @@
         expect(link).to.not.be.empty;
         await link.click();
         link = await browser.findElement(
-          By.xpath("//a[contains(text(), 'About application')]")
+          By.xpath("//a[contains(text(), 'O aplikaciji')]")
         );
         expect(link).to.not.be.empty;
         await link.click();
@@ -88,46 +83,11 @@
         });
         it("page text", async () => {
           let text = await browser.findElement(
-            By.xpath("//p[contains(text(), 'boredom is still a part of life')]")
+            By.xpath("//p[contains(text(), 'kjer se lahko enostavno prijavite')]")
           );
           expect(text).to.not.be.empty;
           expect(await text.getText()).to.have.string(
-            "Even though we have more activities and information serving our days than ever before – work, family, friends, travel, the internet, books, movies – boredom is still a part of life."
-          );
-        });
-      });
-    });
-    describe("Location details", () => {
-      before(() => browser.get(applicationUrl));
-      it("select Ljubljana - Viško pokopališče", async () => {
-        let link = await browser.findElement(
-          By.xpath("//a[contains(text(), 'Ljubljana - Viško pokopališče')]")
-        );
-        expect(link).to.not.be.empty;
-        await link.click();
-      });
-      context("accuray of data on the location details page", () => {
-        it("location title", async () => {
-          let title = await browser.findElement(By.css("h1"));
-          expect(title).to.not.be.empty;
-          expect(await title.getText()).to.be.equal(
-            "Ljubljana - Viško pokopališče"
-          );
-        });
-        it("location properties", async () => {
-          let secondKeyword = await browser.findElement(
-            By.xpath("//h6[text()='Keywords']/following-sibling::p/span[2]")
-          );
-          expect(secondKeyword).to.not.be.empty;
-          expect(await secondKeyword.getText()).to.be.equal("portal");
-        });
-        it("location sidebar", async () => {
-          let sidebar = await browser.findElement(
-            By.xpath("//app-sidebar/small")
-          );
-          expect(sidebar).to.not.be.empty;
-          expect(await sidebar.getText()).to.have.string(
-            "Ljubljana - Viško pokopališče is on our Demo app"
+            "Dobrodošli v aplikaciji Nogomet, kjer se lahko enostavno prijavite in sledite statistikam vseh uporabnikov, ki so se prijavili na rekreativno igranje nogometa."
           );
         });
       });
@@ -189,78 +149,91 @@
         expect(jwtToken).to.not.be.empty;
       });
     });
-    describe("Add comment", async () => {
-      before(async () => await browser.get(applicationUrl));
-      it("select Ljubljana - Viško pokopališče", async () => {
+    describe("Event list", () => {
+      before(async () => await browser.get(applicationUrl+"/events"));
+      it("number of events on the home page", async () => {
+        let events = await browser.findElements(By.css(".card-body"));
+        expect(events).to.be.an("array").to.have.lengthOf(10);
+      });
+    });
+    describe("Event details", () => {
+      before(() => browser.get(applicationUrl+"/events"));
+      it("select 15. november, 2023", async () => {
         let link = await browser.findElement(
-          By.xpath("//a[contains(text(), 'Ljubljana - Viško pokopališče')]")
+          By.xpath("//a[contains(text(), '15. november, 2023')]")
         );
         expect(link).to.not.be.empty;
         await link.click();
       });
-      it("check if Ljubljana - Viško pokopališče page is displayed", async () => {
+      context("accuray of data on the event details page", () => {
+        it("event title", async () => {
+          let title = await browser.findElement(By.css("h6"));
+          expect(title).to.not.be.empty;
+          expect(await title.getText()).to.be.equal(
+            "Description"
+          );
+        });
+      });
+    });
+    describe("Add signup", async () => {
+      before(async () => await browser.get(applicationUrl+"/events"));
+      it("select 15. november, 2023", async () => {
+        let link = await browser.findElement(
+          By.xpath("//a[contains(text(), '15. november, 2023')]")
+        );
+        expect(link).to.not.be.empty;
+        await link.click();
+      });
+      it("check if 15. november, 2023 page is displayed", async () => {
         let title = await browser.findElement(
-          By.xpath("//h1[contains(text(), 'Ljubljana - Viško pokopališče')]")
+          By.xpath("//h6[contains(text(), 'Description')]")
         );
         expect(title).to.not.be.empty;
         expect(await title.getText()).to.be.equal(
-          "Ljubljana - Viško pokopališče"
+          "Description"
         );
       });
-      it("click the button to add a comment", async () => {
+      it("click the button to add a signup", async () => {
         await browser.executeScript(
           "window.scrollBy(0,document.body.scrollHeight)"
         );
-        await browser.executeScript("document.querySelector('a.btn').click()");
-        let modal = await browser.findElement(
-          By.xpath("//h4[contains(@class,'modal-title')]")
-        );
-        expect(modal).to.not.be.empty;
-        let rating = await browser.findElement(By.xpath("//span[@title=3]"));
-        await rating.click();
-        await browser
-          .findElement(By.css("textarea[id='comment']"))
-          .sendKeys("Najbolj so mi všeč igrala.");
         button = await browser.findElement(
-          By.xpath("//button[contains(., 'Save')]")
+          By.xpath("//button[contains(., 'Pridem')]")
         );
         await button.click();
       });
       it("check if the comment has been added", async () => {
-        execSync("sleep 1");
         let lastComment = await browser.findElement(
-          By.xpath(
-            "//div[contains(@class, 'card-header') and contains(., 'comments')]/../div[@class='card-body']/div[1]"
-          )
+          By.id("signup")
         );
         expect(lastComment).to.not.be.empty;
-        let author = await lastComment.findElement(By.xpath("./div[1]/div[1]"));
+        let author = await lastComment.findElement(By.xpath("//div[contains(text(), 'Janez Kranjski')]"));
         expect(author).to.not.be.empty;
         expect(await author.getText()).to.be.equal("Janez Kranjski");
-        let comment = await lastComment.findElement(By.xpath("./div[2]"));
+        let comment = await lastComment.findElement(By.xpath("//div[contains(text(), 'Pridem')]"));
         expect(comment).to.not.be.empty;
         expect(await comment.getText()).to.be.equal(
-          "Najbolj so mi všeč igrala."
+          "Pridem"
         );
       });
-      it("delete user's comments", async function () {
+      it("delete user's signups", async function () {
         let link = await browser.getCurrentUrl();
-        let locationId = link.split("locations/")[1];
-        expect(locationId).to.not.be.empty;
-        let location = await axios({
+        let eventId = link.split("events/")[1];
+        expect(eventId).to.not.be.empty;
+        let event = await axios({
           method: "get",
-          url: "locations/" + locationId,
+          url: "events/" + eventId,
           httpsAgent: new https.Agent({ rejectUnauthorized: false }),
         });
-        let comments = (await location.data.comments)
+        let signups = (await event.data.signedup)
           .filter((x) => {
-            return x.author == "Janez Kranjski";
+            return x.name == "Janez Kranjski";
           })
           .map((x) => x._id);
-        for (const commentId of comments) {
+        for (const signupId of signups) {
           let response = await axios({
             method: "delete",
-            url: "locations/" + locationId + "/comments/" + commentId,
+            url: "events/" + eventId + "/signups/" + signupId,
             headers: { Authorization: "Bearer " + jwtToken },
             httpsAgent: new https.Agent({ rejectUnauthorized: false }),
           });

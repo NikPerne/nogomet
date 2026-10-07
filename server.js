@@ -43,7 +43,7 @@ const swaggerDocument = swaggerJsDoc({
         description: "Secure development server for testing",
       },
       {
-        url: "http://localhost:3000/api",
+        url: "https://host.docker.internal:3000/api",
         description: "Development server for testing",
       },
       {

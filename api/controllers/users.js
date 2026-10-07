@@ -1,6 +1,29 @@
 const mongoose = require("mongoose");
 const User = mongoose.model("User");
 
+  /**
+   * @openapi
+   * /events:
+   *   get:
+   *     summary: Get a list of events
+   *     tags: [Authentication]
+   *     security:
+   *      - jwt: []
+   *     parameters:
+   *       - in: query
+   *         name: nResults
+   *         description: Number of results to return
+   *         schema:
+   *           type: integer
+   *     responses:
+   *       '200':
+   *         description: Successful response with the list of events
+   *       '404':
+   *         description: No events found
+   *       '500':
+   *         description: Internal server error
+   */
+
 const userList = async (req, res) => {
     let nResults = parseInt(req.query.nResults);
     nResults = isNaN(nResults) ? 10 : nResults;

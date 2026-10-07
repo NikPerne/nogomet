@@ -52,6 +52,11 @@ export class DemoDataService {
       .pipe(retry(1), catchError(this.handleError));
   }
 
+  updateEvent(eventId: string, updatedEvent: Event): Observable<Event> {
+    const url = `${this.apiUrl}/events/${eventId}`;
+    return this.http.put<Event>(url, updatedEvent);
+  }
+
   public getEvents(
     nResults: number
   ): Observable<Event[]> {

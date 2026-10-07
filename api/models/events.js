@@ -12,7 +12,7 @@ const mongoose = require("mongoose");
  *     name:
  *      type: string
  *      description: Name of the user signing up.
- *      example: John Doe
+ *      example: Nik Perne
  *     attending:
  *      type: boolean
  *      description: Indicates whether the user is attending the event.
@@ -47,11 +47,11 @@ const signupSchema = new mongoose.Schema({
  *     name:
  *      type: string
  *      description: Name of the event.
- *      example: Concert
+ *      example: Nogomet
  *     description:
  *      type: string
  *      description: Description of the event.
- *      example: A musical performance by the local band.
+ *      example: Torkova rekreacija.
  *     date:
  *      type: string
  *      description: Date of the event.
@@ -79,6 +79,9 @@ const eventSchema = mongoose.Schema({
   signedup: {
     type: [signupSchema],
   },
+  pridemCount: {
+    type: Number
+  }
 });
 
 mongoose.model("Event", eventSchema, "Events");

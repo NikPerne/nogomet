@@ -1,4 +1,4 @@
-import { Component, Input } from "@angular/core";
+import { Component, Input, OnInit } from "@angular/core";
 import { DemoDataService } from "../../services/demo-data.service";
 import { Event } from "../../classes/event";
 import { AuthenticationService } from "../../services/authentication.service";
@@ -11,7 +11,9 @@ import { Signup } from "../../classes/signup";
   templateUrl: "event-details.component.html",
   styles: []
 })
-export class EventDetailsComponent {
+export class EventDetailsComponent implements OnInit {
+  
+  pridemCount: number = 0;
 
   constructor(
     private demoDataService: DemoDataService,
@@ -20,6 +22,11 @@ export class EventDetailsComponent {
   ) { }
 
   @Input() event!: Event;
+
+  
+  ngOnInit() {
+    this.fetchEventDetails();
+  }
 
   protected newSignupPridem: Signup = {
     name: "",
@@ -38,6 +45,26 @@ export class EventDetailsComponent {
     return this.connectionService.isConnected;
   }
 
+  fetchEventDetails() {
+    const eventId = this.event._id;
+    this.demoDataService.getEventDetails(eventId).subscribe((event) => {
+    this.event = event;
+    this.pridemCount = event.pridemCount ?? 0; // Update the pridemCount property, defaulting to 0 if undefined
+    });
+  }
+
+  updateEventInDatabase() {
+    const updatedEvent = { ...this.event, pridemCount: this.pridemCount };
+    this.demoDataService.updateEvent(this.event._id, updatedEvent).subscribe({
+      next: (updatedEvent) => {
+        this.event = updatedEvent;
+      },
+      error: (err) => {
+        console.log('Error updating event:', err);
+      }
+    });
+  }
+
   protected signUpForEvent() {
     this.newSignupPridem.name = this.getCurrentUser();
     this.demoDataService
@@ -45,11 +72,13 @@ export class EventDetailsComponent {
       .subscribe({
         next: (signedUp: Signup) => {
           this.event?.signedup?.unshift(signedUp);
+          this.pridemCount++; // Increment the pridemCount
+          this.updateEventInDatabase(); // Call a new method to update the event
         },
-          error: (err) => {
+        error: (err) => {
           "Error adding signup.";
         },
-    });
+      });
   }
 
   protected signUpForEventNe() {
@@ -59,11 +88,12 @@ export class EventDetailsComponent {
       .subscribe({
         next: (signedUp: Signup) => {
           this.event?.signedup?.unshift(signedUp);
+          this.updateEventInDatabase(); // Call the new method to update the event
         },
-          error: (err) => {
+        error: (err) => {
           "Error adding signup.";
         },
-    });
+      });
   }
 
   isUserSignedUp() {

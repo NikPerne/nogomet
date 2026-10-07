@@ -39,3 +39,5 @@ Uporabnik - navaden:
 
 ## PREZENTACIJA:
 [Google Predstavitev](https://docs.google.com/presentation/d/1vlyFQ23D49aC4sA6mefUrd_ueeq5vy1UmWnYHGZL0dc/edit?usp=drivesdk)
+
+![Alt text](<test/Posnetek zaslona 2023-11-20 190145.png>)

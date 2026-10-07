@@ -27,7 +27,7 @@ export class EventListComponent implements OnInit {
     }
 
     private filterLocations = {
-      nResults: 10,
+      nResults: 1000,
     };
 
 
