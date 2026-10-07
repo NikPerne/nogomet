@@ -79,7 +79,6 @@ export class RegisterComponent {
   protected formError!: string;
   protected credentials: User = {
     name: "",
-    timesSignedUp: 0,
     email: "",
     password: "",
     admin: false,

@@ -4,4 +4,5 @@ export class Signup {
   name!: string;
   attending!: boolean;
   createdOn?: Date;
+  attendingSince?: Date;
 }

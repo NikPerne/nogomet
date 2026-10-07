@@ -25,19 +25,18 @@
         class="link-primary text-decoration-none"
         [ngClass]="{ 'fw-bold': first }"
         ><i class="fa-solid fa-regular fa-calendar-days me-2"></i
-        >{{ event.date | date : "d. MMMM, yyyy" : "CEST" : "sl" }}</a
+        >{{ event.date | date : "EEE, d. MMMM, yyyy" : undefined : "sl"
+        }}<ng-container *ngIf="hasTimeOfDay(event)"
+          >, {{ event.date | date : "HH:mm" }}</ng-container
+        ></a
       >
       <span>
         <span *ngIf="first" class="badge bg-success me-2">Naslednji</span>
         <span
           class="badge"
-          [ngClass]="
-            event.maxPlayers && attendingCount(event) >= event.maxPlayers
-              ? 'bg-danger'
-              : 'bg-secondary'
-          "
+          [ngClass]="isEventFull(event) ? 'bg-danger' : 'bg-secondary'"
           title="Število prijavljenih"
-          ><i class="fa-solid fa-user me-1"></i>{{ attendingCount(event)
+          ><i class="fa-solid fa-user me-1"></i>{{ confirmedCount(event)
           }}<ng-container *ngIf="event.maxPlayers"
             >/{{ event.maxPlayers }}</ng-container
           ></span
@@ -65,7 +64,7 @@
         >{{ event.date | date : "d. MMMM, yyyy" : "CEST" : "sl" }}</a
       >
       <span class="badge bg-light text-dark" title="Število udeležencev"
-        ><i class="fa-solid fa-user me-1"></i>{{ attendingCount(event) }}</span
+        ><i class="fa-solid fa-user me-1"></i>{{ confirmedCount(event) }}</span
       >
     </div>
     <div *ngIf="hiddenPastCount > 0" class="card-body py-2">
@@ -103,6 +102,11 @@
     <h4 class="modal-title pull-left">
       <i class="fa-regular fa-calendar-plus pe-2"></i>Add event
     </h4>
+    <small
+      *ngIf="upcomingEvents.length || pastEvents.length"
+      class="text-secondary ms-3"
+      >Pre-filled from the latest event</small
+    >
     <button
       type="button"
       class="btn-close close pull-right"
@@ -153,6 +157,15 @@
         ></mat-datepicker-toggle>
         <mat-datepicker #datepicker></mat-datepicker>
       </mat-form-field>
+    </div>
+    <div class="form-group">
+      <label for="event-time" class="form-label mt-2">Start time</label>
+      <input
+        id="event-time"
+        type="time"
+        [(ngModel)]="newEventTime"
+        class="form-control form-control-sm"
+      />
     </div>
     <div class="form-group">
       <label for="event-max-players" class="form-label mt-2"

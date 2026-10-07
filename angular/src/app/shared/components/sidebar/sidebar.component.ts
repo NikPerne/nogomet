@@ -7,7 +7,6 @@ import {
   ApexPlotOptions
 } from "ng-apexcharts";
 import { DemoDataService } from "../../services/demo-data.service";
-import { User } from "../../classes/user";
 
 export type ChartOptions = {
   series: ApexAxisChartSeries;
@@ -46,16 +45,14 @@ export type ChartOptions = {
 export class SidebarComponent implements OnInit {
   @Input() content: string = "";
 
-  users: User[] = [];
-
   chartOptions: ChartOptions = {
     series: [{
-      name: "Obiskal",
+      name: "Odigranih tekem",
       data: [],
     }],
     chart: {
       type: "bar",
-      height: 150,
+      height: 260,
       width: 300,
     },
     plotOptions: {
@@ -68,26 +65,32 @@ export class SidebarComponent implements OnInit {
     },
     xaxis: {
       categories: [],
+      decimalsInFloat: 0,
     },
   };
 
   constructor(private demoDataService: DemoDataService) {}
 
   ngOnInit() {
-    this.getUsers();
+    this.loadStats();
   }
 
-  getUsers() {
-    this.demoDataService.getUsers(10).subscribe({
-      next: (users) => {
-        this.users = users;
-        const data = users.map((user) => ({ x: user.name, y: user.timesSignedUp }));
+  /**
+   * Games played = past events where the player was confirmed (not waitlisted)
+   */
+  private loadStats() {
+    this.demoDataService.getPlayerStats(10).subscribe({
+      next: (players) => {
+        const data = players.map((player) => ({
+          x: player.name,
+          y: player.gamesPlayed,
+        }));
         this.chartOptions = {
           ...this.chartOptions,
-          series: [{ name: "Obiskal", data }],
+          series: [{ name: "Odigranih tekem", data }],
         };
       },
-      error: (err) => console.error("Error loading users:", err),
+      error: (err) => console.error("Error loading player stats:", err),
     });
   }
 }

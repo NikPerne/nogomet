@@ -2,8 +2,6 @@ const mongoose = require("mongoose");
 const Event = mongoose.model("Event");
 const { parseLimit, isValidId } = require("./helpers");
 
-const User = mongoose.model("User");
-
 const EDITABLE_FIELDS = ["name", "description", "date", "maxPlayers"];
 
 /**
@@ -184,7 +182,7 @@ const updateEvent = async (req, res) => {
  * /events/{eventId}:
  *   delete:
  *     summary: Delete an event (administrators only)
- *     description: Attending players' timesSignedUp is decreased, since the event did not count.
+ *     description: Its signups no longer count towards players' gamesPlayed.
  *     tags: [Events]
  *     security:
  *      - jwt: []
@@ -212,15 +210,6 @@ const deleteEvent = async (req, res) => {
   try {
     const event = await Event.findByIdAndDelete(eventId).exec();
     if (!event) return eventNotFound(res, eventId);
-    // Legacy signups without userId can't be attributed reliably, so they are skipped
-    const attendingUserIds = event.signedup
-      .filter((signup) => signup.attending && signup.userId)
-      .map((signup) => signup.userId);
-    if (attendingUserIds.length > 0)
-      await User.updateMany(
-        { _id: { $in: attendingUserIds }, timesSignedUp: { $gt: 0 } },
-        { $inc: { timesSignedUp: -1 } }
-      ).exec();
     res.status(204).send();
   } catch (err) {
     res.status(500).json({ message: err.message });

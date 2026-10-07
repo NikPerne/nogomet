@@ -9,17 +9,47 @@ export class Event {
   signedup?: Signup[];
 }
 
+/*
+ * These mirror the Event model methods in api/models/events.js; keep them in sync
+ */
+
 /**
- * Events only have a date, so signups stay open until the end of the event's day
- * (mirrors Event.isPast() in api/models/events.js)
+ * Signups stay open for 24 h after the start, since older events have no time of day
  */
 const SIGNUP_GRACE_MS = 24 * 60 * 60 * 1000;
 
 export const isEventPast = (event: Event): boolean =>
   new Date(event.date).getTime() + SIGNUP_GRACE_MS < Date.now();
 
-export const attendingCount = (event: Event): number =>
-  event.signedup?.filter((signup) => signup.attending).length ?? 0;
+/**
+ * Attending signups in the order they said "Pridem" (legacy signups use createdOn)
+ */
+export const attendingInOrder = (event: Event): Signup[] => {
+  const since = (signup: Signup) =>
+    new Date(signup.attendingSince ?? signup.createdOn ?? 0).getTime();
+  return (event.signedup ?? [])
+    .filter((signup) => signup.attending)
+    .sort((a, b) => since(a) - since(b));
+};
+
+/**
+ * The first maxPlayers attending signups play; the rest are on the waitlist
+ */
+export const confirmedSignups = (event: Event): Signup[] => {
+  const attending = attendingInOrder(event);
+  return event.maxPlayers ? attending.slice(0, event.maxPlayers) : attending;
+};
+
+export const waitlistedSignups = (event: Event): Signup[] =>
+  event.maxPlayers ? attendingInOrder(event).slice(event.maxPlayers) : [];
 
 export const isEventFull = (event: Event): boolean =>
-  !!event.maxPlayers && attendingCount(event) >= event.maxPlayers;
+  !!event.maxPlayers && attendingInOrder(event).length >= event.maxPlayers;
+
+/**
+ * Events created before times were added are stored at local midnight
+ */
+export const hasTimeOfDay = (event: Event): boolean => {
+  const date = new Date(event.date);
+  return date.getHours() !== 0 || date.getMinutes() !== 0;
+};

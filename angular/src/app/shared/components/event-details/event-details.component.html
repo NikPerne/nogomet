@@ -22,25 +22,39 @@
               <p>{{ event.description }}</p>
               <p class="mb-2">
                 <i class="fa-regular fa-calendar me-2"></i
-                >{{ event.date | date : "EEEE, d. MMMM yyyy" : "CEST" : "sl" }}
+                >{{ event.date | date : "EEEE, d. MMMM yyyy" : undefined : "sl" }}
+                <ng-container *ngIf="hasTime"
+                  ><i class="fa-regular fa-clock ms-2 me-1"></i
+                  >{{ event.date | date : "HH:mm" }}</ng-container
+                >
               </p>
             </div>
-            <div>
+            <div class="d-flex flex-wrap align-items-center">
               <span
-                >Število prijavljenih: {{ attendingCount
+                >Število prijavljenih: {{ confirmedCount
                 }}<ng-container *ngIf="event.maxPlayers">
                   / {{ event.maxPlayers }}</ng-container
                 ></span
+              >
+              <span *ngIf="waitlistCount > 0" class="badge bg-warning text-dark ms-2"
+                >+{{ waitlistCount }} na čakanju</span
               >
               <span *ngIf="isFull" class="badge bg-danger ms-2">Zasedeno</span>
               <span *ngIf="isPast" class="badge bg-secondary ms-2"
                 >Zaključeno</span
               >
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-success ms-auto"
+                (click)="share()"
+              >
+                <i class="fa-solid fa-share-nodes me-1"></i>Deli
+              </button>
             </div>
           </div>
         </div>
       </div>
-      <div class="card mt-4" *ngIf="attendingCount >= 2">
+      <div class="card mt-4" *ngIf="confirmedCount >= 2">
         <div class="card-header bg-light">
           <div class="d-flex justify-content-between align-items-center">
             <h4 class="mt-1 mb-1">
@@ -121,6 +135,12 @@
                 >
                   {{ signup.attending ? "Pridem" : "Ne pridem" }}
                 </div>
+                <span
+                  *ngIf="waitlistPosition(signup) as position"
+                  class="badge bg-warning text-dark ms-2"
+                  title="Na čakalni listi, pride na vrsto, ko se kdo odjavi"
+                  >Rezerva #{{ position }}</span
+                >
               </div>
             </div>
           </div>
@@ -133,6 +153,9 @@
     <div class="alert alert-dark p-2" [hidden]="!errorMessage">
       <i class="fa-solid fa-triangle-exclamation pe-2"></i>{{ errorMessage }}
     </div>
+    <div class="alert alert-success p-2" [hidden]="!infoMessage">
+      <i class="fa-solid fa-check pe-2"></i>{{ infoMessage }}
+    </div>
   </div>
   <div *ngIf="isPast; else answerButtons" class="col-md-8">
     <small class="text-secondary"
@@ -141,18 +164,22 @@
   </div>
   <ng-template #answerButtons>
     <div class="modal-footer col-md-8">
-      <small *ngIf="ownSignup" class="text-secondary me-auto"
-        >Tvoj odgovor:
-        {{ ownSignup.attending ? "Pridem" : "Ne pridem" }} (lahko ga
-        spremeniš)</small
+      <small *ngIf="ownSignup as own" class="text-secondary me-auto"
+        >Tvoj odgovor: {{ own.attending ? "Pridem" : "Ne pridem"
+        }}<ng-container *ngIf="waitlistPosition(own) as position">
+          (rezerva #{{ position }})</ng-container
+        >
+        – lahko ga spremeniš</small
       >
       <button
         type="button"
         class="btn btn-sm btn-primary"
         (click)="answer(true)"
         [disabled]="!canAnswer(true)"
+        [title]="joinsWaitlist ? 'Dogodek je poln, prišel boš na čakalno listo' : ''"
       >
-        <i class="fa-regular fa-circle-check me-2"></i>Pridem
+        <i class="fa-regular fa-circle-check me-2"></i
+        >{{ joinsWaitlist ? "Pridem (rezerva)" : "Pridem" }}
       </button>
       <button
         type="button"

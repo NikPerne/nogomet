@@ -71,7 +71,6 @@ export class LoginComponent {
 
   protected formError!: string;
   protected credentials: User = {
-    timesSignedUp: 0,
     name: "",
     email: "",
     password: "",

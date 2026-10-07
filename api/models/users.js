@@ -44,7 +44,6 @@ const usersSchema = new mongoose.Schema({
   name: { type: String, required: [true, "Name is required!"] },
   hash: { type: String, required: [true, "Hash is required!"] },
   salt: { type: String, required: [true, "Salt is required!"] },
-  timesSignedUp: {type: Number, default: 0},
   admin: {type: Boolean, default: false},
 });
 

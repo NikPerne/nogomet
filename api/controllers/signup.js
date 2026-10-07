@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const Event = mongoose.model("Event");
-const User = mongoose.model("User");
 const { isValidId } = require("./helpers");
 
 /**
@@ -18,15 +17,6 @@ const parseAttending = (value) => {
 const isOwnSignup = (signup, user) =>
   signup.userId ? signup.userId.equals(user._id) : signup.name === user.name;
 
-/**
- * timesSignedUp counts only signups where the user is attending ("Pridem")
- */
-const changeTimesSignedUp = (userId, delta) =>
-  User.updateOne(
-    delta < 0 ? { _id: userId, timesSignedUp: { $gt: 0 } } : { _id: userId },
-    { $inc: { timesSignedUp: delta } }
-  ).exec();
-
 const eventNotFound = (res, eventId) =>
   res.status(404).json({ message: `Event with id '${eventId}' not found.` });
 
@@ -37,9 +27,6 @@ const eventClosed = (res) =>
   res
     .status(409)
     .json({ message: "Signups for this event are closed, it has already taken place." });
-
-const eventFull = (res) =>
-  res.status(409).json({ message: "This event is full." });
 
 const findEvent = (eventId) =>
   Event.findById(eventId).select("name date maxPlayers signedup").exec();
@@ -80,7 +67,7 @@ const findEvent = (eventId) =>
  *       '404':
  *         description: Event not found
  *       '409':
- *         description: Already signed up, event is full, or event has already taken place
+ *         description: Already signed up, or event has already taken place
  *       '500':
  *         description: Internal server error
  */
@@ -100,15 +87,15 @@ const signupCreate = async (req, res) => {
       return res
         .status(409)
         .json({ message: "You have already signed up for this event." });
-    if (attending && event.isFull()) return eventFull(res);
 
+    // When the event is full, attending players join the waitlist (see confirmedSignups)
     event.signedup.push({
       name: req.user.name,
       userId: req.user._id,
       attending,
+      attendingSince: attending ? new Date() : undefined,
     });
     await event.save();
-    if (attending) await changeTimesSignedUp(req.user._id, 1);
     res.status(201).json(event.signedup[event.signedup.length - 1]);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -199,7 +186,7 @@ const signupReadOne = async (req, res) => {
  *       '404':
  *         description: Event or signup not found
  *       '409':
- *         description: Event is full or has already taken place
+ *         description: Event has already taken place
  *       '500':
  *         description: Internal server error
  */
@@ -222,13 +209,12 @@ const signupUpdateOne = async (req, res) => {
         .json({ message: "Not authorized to change this signup." });
     if (event.isPast()) return eventClosed(res);
 
-    const wasAttending = !!signup.attending;
-    if (wasAttending !== attending) {
-      if (attending && event.isFull()) return eventFull(res);
+    if (!!signup.attending !== attending) {
+      // Switching to attending joins the back of the queue
       signup.attending = attending;
+      signup.attendingSince = attending ? new Date() : undefined;
       signup.userId = req.user._id;
       await event.save();
-      await changeTimesSignedUp(req.user._id, attending ? 1 : -1);
     }
     res.status(200).json(signup);
   } catch (err) {
@@ -283,10 +269,8 @@ const signupDeleteOne = async (req, res) => {
         .json({ message: "Not authorized to delete this signup." });
     if (event.isPast()) return eventClosed(res);
 
-    const wasAttending = signup.attending;
     signup.deleteOne();
     await event.save();
-    if (wasAttending) await changeTimesSignedUp(req.user._id, -1);
     res.status(204).send();
   } catch (err) {
     res.status(500).json({ message: err.message });

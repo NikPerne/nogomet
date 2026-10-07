@@ -57,8 +57,8 @@ export class AuthenticationService {
 
   public getCurrentUser(): User | null {
     if (!this.isLoggedIn()) return null;
-    const { _id, email, name, timesSignedUp, admin } = this.getPayload();
-    return { _id, email, name, timesSignedUp, admin: !!admin };
+    const { _id, email, name, admin } = this.getPayload();
+    return { _id, email, name, admin: !!admin };
   }
 
   /**

@@ -13,6 +13,7 @@ import { AuthResponse } from "../classes/auth-response";
 import { BROWSER_STORAGE } from "../classes/storage";
 import { environment } from "../../../environments/environment";
 import { Signup } from "../classes/signup";
+import { PlayerStats } from "../classes/player-stats";
 
 @Injectable({
   providedIn: "root",
@@ -33,10 +34,10 @@ export class DemoDataService {
     return this.makeAuthApiCall("register", user);
   }
 
-  public getUsers(nResults: number): Observable<User[]> {
+  public getPlayerStats(nResults: number): Observable<PlayerStats[]> {
     const url: string = `${this.apiUrl}/users?nResults=${nResults}`;
     return this.http
-      .get<User[]>(url)
+      .get<PlayerStats[]>(url)
       .pipe(retry(1), catchError(this.handleError));
   }
 
