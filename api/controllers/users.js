@@ -4,19 +4,40 @@ const Event = mongoose.model("Event");
 const { parseLimit } = require("./helpers");
 
 /**
- * Counts, per user, the started events where they were a confirmed player
- * (attending and not on the waitlist). Legacy signups without userId count by name.
+ * Signups created before userId was stored can only be matched by name
  */
-const countGamesPlayed = (events) => {
-  const byUserId = new Map();
-  const byName = new Map();
-  const increment = (map, key) => map.set(key, (map.get(key) ?? 0) + 1);
-  for (const event of events)
-    for (const signup of event.confirmedSignups()) {
-      if (signup.userId) increment(byUserId, signup.userId.toString());
-      else increment(byName, signup.name);
-    }
-  return { byUserId, byName };
+const belongsTo = (signup, user) =>
+  signup.userId ? signup.userId.equals(user._id) : signup.name === user.name;
+
+/**
+ * Statistics for one user over played events (started, not cancelled, oldest first).
+ * - gamesPlayed: events where the user was a confirmed player (not waitlisted)
+ * - attendanceRate: gamesPlayed / events since the user's first signup (0..1)
+ * - currentStreak: consecutive most recent events the user played
+ * - lastPlayed: date of the most recent event the user played, or null
+ */
+const playerStats = (user, events) => {
+  const played = events.map((event) =>
+    event.confirmedSignups().some((signup) => belongsTo(signup, user))
+  );
+  const firstSignup = events.findIndex((event) =>
+    event.signedup.some((signup) => belongsTo(signup, user))
+  );
+  const eligible = firstSignup === -1 ? 0 : events.length - firstSignup;
+  const gamesPlayed = played.filter(Boolean).length;
+
+  let currentStreak = 0;
+  for (let i = played.length - 1; i >= 0 && played[i]; i--) currentStreak++;
+  const lastPlayedIndex = played.lastIndexOf(true);
+
+  return {
+    _id: user._id,
+    name: user.name,
+    gamesPlayed,
+    attendanceRate: eligible ? Math.round((gamesPlayed / eligible) * 100) / 100 : 0,
+    currentStreak,
+    lastPlayed: lastPlayedIndex === -1 ? null : events[lastPlayedIndex].date,
+  };
 };
 
 /**
@@ -24,7 +45,10 @@ const countGamesPlayed = (events) => {
  * /users:
  *   get:
  *     summary: Get players' attendance statistics, most games first
- *     description: gamesPlayed counts started events where the user was a confirmed player (not waitlisted).
+ *     description: >
+ *       Computed from started, non-cancelled events. gamesPlayed counts events where the user
+ *       was a confirmed player (not waitlisted); attendanceRate is gamesPlayed divided by the
+ *       events since the user's first signup; currentStreak counts consecutive recent games.
  *     tags: [Authentication]
  *     parameters:
  *       - in: query
@@ -34,7 +58,7 @@ const countGamesPlayed = (events) => {
  *           type: integer
  *     responses:
  *       '200':
- *         description: List of users with _id, name and gamesPlayed (may be empty)
+ *         description: List of users with _id, name, gamesPlayed, attendanceRate, currentStreak and lastPlayed (may be empty)
  *       '500':
  *         description: Internal server error
  */
@@ -43,19 +67,19 @@ const userList = async (req, res) => {
     // Only expose public fields: never email, hash or salt
     const [users, events] = await Promise.all([
       User.find().select("name").exec(),
-      Event.find({ date: { $lt: new Date() } })
+      Event.find({ date: { $lt: new Date() }, cancelled: { $ne: true } })
         .select("date maxPlayers signedup")
+        .sort({ date: 1 })
         .exec(),
     ]);
-    const { byUserId, byName } = countGamesPlayed(events);
     const stats = users
-      .map((user) => ({
-        _id: user._id,
-        name: user.name,
-        gamesPlayed:
-          (byUserId.get(user._id.toString()) ?? 0) + (byName.get(user.name) ?? 0),
-      }))
-      .sort((a, b) => b.gamesPlayed - a.gamesPlayed || a.name.localeCompare(b.name))
+      .map((user) => playerStats(user, events))
+      .sort(
+        (a, b) =>
+          b.gamesPlayed - a.gamesPlayed ||
+          b.attendanceRate - a.attendanceRate ||
+          a.name.localeCompare(b.name)
+      )
       .slice(0, parseLimit(req.query.nResults));
     res.status(200).json(stats);
   } catch (err) {

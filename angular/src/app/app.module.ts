@@ -27,6 +27,8 @@ import { EventListComponent } from './shared/components/event-list/event-list.co
 import { EventDetailsComponent } from './shared/components/event-details/event-details.component';
 import { DetailsPageEventsComponent } from './shared/components/details-page-events/details-page-events.component';
 import { MostRecentSignupPipe } from './shared/pipes/most-recent-signup.pipe';
+import { EventFormComponent } from './shared/components/event-form/event-form.component';
+import { LeaderboardComponent } from './shared/components/leaderboard/leaderboard.component';
 
 @NgModule({
   declarations: [
@@ -42,6 +44,8 @@ import { MostRecentSignupPipe } from './shared/pipes/most-recent-signup.pipe';
     EventDetailsComponent,
     DetailsPageEventsComponent,
     MostRecentSignupPipe,
+    EventFormComponent,
+    LeaderboardComponent,
   ],
   imports: [
     BrowserModule,

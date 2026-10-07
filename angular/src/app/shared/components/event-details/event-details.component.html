@@ -7,15 +7,35 @@
             <h4 class="mt-1 mb-1">
               <i class="fa-regular fa-file-lines pe-2"></i>Nogomet
             </h4>
-            <i
-              *ngIf="isAdmin()"
-              class="fa-solid fa-trash-can text-danger show-pointer"
-              title="Izbriši dogodek"
-              (click)="deleteEvent()"
-            ></i>
+            <span *ngIf="isAdmin()" class="d-flex gap-3">
+              <i
+                class="fa-solid fa-pen-to-square text-primary show-pointer"
+                title="Uredi dogodek"
+                (click)="openEditForm(editForm)"
+              ></i>
+              <i
+                class="fa-solid show-pointer"
+                [ngClass]="
+                  event.cancelled
+                    ? 'fa-rotate-left text-success'
+                    : 'fa-ban text-warning'
+                "
+                [title]="event.cancelled ? 'Obnovi dogodek' : 'Odpovej dogodek'"
+                (click)="toggleCancelled()"
+              ></i>
+              <i
+                class="fa-solid fa-trash-can text-danger show-pointer"
+                title="Izbriši dogodek"
+                (click)="deleteEvent()"
+              ></i>
+            </span>
           </div>
         </div>
         <div class="card-body">
+          <div *ngIf="event.cancelled" class="alert alert-danger p-2">
+            <i class="fa-solid fa-ban pe-2"></i><b>Dogodek je odpovedan.</b>
+            <span *ngIf="event.cancelReason"> {{ event.cancelReason }}</span>
+          </div>
           <div class="row">
             <div class="col-12">
               <h6>Description</h6>
@@ -40,16 +60,27 @@
                 >+{{ waitlistCount }} na čakanju</span
               >
               <span *ngIf="isFull" class="badge bg-danger ms-2">Zasedeno</span>
-              <span *ngIf="isPast" class="badge bg-secondary ms-2"
+              <span *ngIf="isPast && !event.cancelled" class="badge bg-secondary ms-2"
                 >Zaključeno</span
               >
-              <button
-                type="button"
-                class="btn btn-sm btn-outline-success ms-auto"
-                (click)="share()"
-              >
-                <i class="fa-solid fa-share-nodes me-1"></i>Deli
-              </button>
+              <span class="ms-auto">
+                <button
+                  *ngIf="!isPast && !event.cancelled"
+                  type="button"
+                  class="btn btn-sm btn-outline-primary"
+                  title="Dodaj v koledar (.ics)"
+                  (click)="addToCalendar()"
+                >
+                  <i class="fa-regular fa-calendar-plus me-1"></i>Koledar
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-success"
+                  (click)="share()"
+                >
+                  <i class="fa-solid fa-share-nodes me-1"></i>Deli
+                </button>
+              </span>
             </div>
           </div>
         </div>
@@ -117,6 +148,9 @@
                   class="fa-solid fa-trash-can text-primary show-pointer ms-4"
                   (click)="deleteSignup(signup._id)"
                 ></i>
+                <div *ngIf="signup.note" class="ps-4 small fst-italic text-secondary">
+                  „{{ signup.note }}“
+                </div>
               </div>
               <div>
                 <small>
@@ -157,12 +191,33 @@
       <i class="fa-solid fa-check pe-2"></i>{{ infoMessage }}
     </div>
   </div>
-  <div *ngIf="isPast; else answerButtons" class="col-md-8">
-    <small class="text-secondary"
-      >Dogodek je že mimo, prijave so zaprte.</small
-    >
+  <div *ngIf="signupsClosed; else answerButtons" class="col-md-8">
+    <small class="text-secondary">{{
+      event.cancelled
+        ? "Dogodek je odpovedan, prijave so zaprte."
+        : "Dogodek je že mimo, prijave so zaprte."
+    }}</small>
   </div>
   <ng-template #answerButtons>
+    <div class="col-md-8 d-flex gap-2 align-items-center">
+      <input
+        type="text"
+        class="form-control form-control-sm"
+        [(ngModel)]="noteDraft"
+        [maxlength]="noteMaxLength"
+        placeholder="Opomba (neobvezno), npr. pridem 10 min kasneje"
+        aria-label="Opomba"
+      />
+      <button
+        *ngIf="ownSignup && noteChanged"
+        type="button"
+        class="btn btn-sm btn-outline-primary text-nowrap"
+        [disabled]="!isConnected()"
+        (click)="saveNote()"
+      >
+        <i class="fa-regular fa-floppy-disk me-1"></i>Shrani opombo
+      </button>
+    </div>
     <div class="modal-footer col-md-8">
       <small *ngIf="ownSignup as own" class="text-secondary me-auto"
         >Tvoj odgovor: {{ own.attending ? "Pridem" : "Ne pridem"
@@ -190,5 +245,14 @@
         <i class="fa-regular fa-circle-xmark me-2"></i>Ne pridem
       </button>
     </div>
+  </ng-template>
+  <ng-template #editForm>
+    <app-event-form
+      title="Edit event"
+      [event]="event"
+      [error]="formError"
+      (save)="saveEdit($event)"
+      (dismiss)="closeEditForm()"
+    ></app-event-form>
   </ng-template>
 </ng-container>

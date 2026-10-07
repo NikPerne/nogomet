@@ -59,14 +59,35 @@ export class DemoDataService {
 
   public createEvent(event: Event): Observable<Event> {
     const url: string = `${this.apiUrl}/events`;
-    let body = new HttpParams()
-      .set("name", event.name)
-      .set("description", event.description)
-      .set("date", new Date(event.date).toISOString());
-    if (event.maxPlayers) body = body.set("maxPlayers", event.maxPlayers);
     return this.http
-      .post<Event>(url, body, { headers: this.headers(true) })
+      .post<Event>(url, this.eventBody(event), { headers: this.headers(true) })
       .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Updates only the given fields; maxPlayers null removes the limit
+   */
+  public updateEvent(eventId: string, changes: Partial<Event>): Observable<Event> {
+    const url: string = `${this.apiUrl}/events/${eventId}`;
+    return this.http
+      .put<Event>(url, this.eventBody(changes), { headers: this.headers(true) })
+      .pipe(catchError(this.handleError));
+  }
+
+  private eventBody(event: Partial<Event>): HttpParams {
+    let body = new HttpParams();
+    if (event.name !== undefined) body = body.set("name", event.name);
+    if (event.description !== undefined)
+      body = body.set("description", event.description);
+    if (event.date !== undefined)
+      body = body.set("date", new Date(event.date).toISOString());
+    if (event.maxPlayers !== undefined)
+      body = body.set("maxPlayers", event.maxPlayers ?? "");
+    if (event.cancelled !== undefined)
+      body = body.set("cancelled", event.cancelled);
+    if (event.cancelReason !== undefined)
+      body = body.set("cancelReason", event.cancelReason ?? "");
+    return body;
   }
 
   public deleteEvent(eventId: string): Observable<unknown> {
@@ -76,13 +97,19 @@ export class DemoDataService {
       .pipe(catchError(this.handleError));
   }
 
+  /**
+   * Changes the answer and/or note; an empty note removes it
+   */
   public updateSignup(
     eventId: string,
     signupId: string,
-    attending: boolean
+    changes: { attending?: boolean; note?: string }
   ): Observable<Signup> {
     const url: string = `${this.apiUrl}/events/${eventId}/signups/${signupId}`;
-    const body = new HttpParams().set("attending", attending);
+    let body = new HttpParams();
+    if (changes.attending !== undefined)
+      body = body.set("attending", changes.attending);
+    if (changes.note !== undefined) body = body.set("note", changes.note);
     return this.http
       .put<Signup>(url, body, { headers: this.headers(true) })
       .pipe(catchError(this.handleError));
@@ -90,7 +117,8 @@ export class DemoDataService {
 
   public signUpForEvent(eventId: string, signup: Signup): Observable<Signup> {
     const url: string = `${this.apiUrl}/events/${eventId}/signups`;
-    const body = new HttpParams().set("attending", signup.attending);
+    let body = new HttpParams().set("attending", signup.attending);
+    if (signup.note) body = body.set("note", signup.note);
     return this.http
       .post<Signup>(url, body, { headers: this.headers(true) })
       .pipe(catchError(this.handleError));

@@ -6,6 +6,8 @@ export class Event {
   description!: string;
   date!: Date;
   maxPlayers?: number | null;
+  cancelled?: boolean;
+  cancelReason?: string | null;
   signedup?: Signup[];
 }
 
@@ -20,6 +22,12 @@ const SIGNUP_GRACE_MS = 24 * 60 * 60 * 1000;
 
 export const isEventPast = (event: Event): boolean =>
   new Date(event.date).getTime() + SIGNUP_GRACE_MS < Date.now();
+
+/**
+ * Signups can't be added or changed for past or cancelled events
+ */
+export const areSignupsClosed = (event: Event): boolean =>
+  !!event.cancelled || isEventPast(event);
 
 /**
  * Attending signups in the order they said "Pridem" (legacy signups use createdOn)
@@ -45,6 +53,11 @@ export const waitlistedSignups = (event: Event): Signup[] =>
 
 export const isEventFull = (event: Event): boolean =>
   !!event.maxPlayers && attendingInOrder(event).length >= event.maxPlayers;
+
+/**
+ * Start time suggested for new events and for older events without a time
+ */
+export const DEFAULT_EVENT_TIME = "20:00";
 
 /**
  * Events created before times were added are stored at local midnight

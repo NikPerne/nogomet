@@ -29,6 +29,10 @@ const mongoose = require("mongoose");
  *      type: string
  *      description: When the user last answered "attending"; decides waitlist order.
  *      format: date-time
+ *     note:
+ *      type: string
+ *      description: Optional short note from the player (max 100 characters).
+ *      example: Pridem 10 min kasneje
  *    required:
  *     - name
  *     - attending
@@ -41,6 +45,11 @@ const signupSchema = new mongoose.Schema({
   attending: { type: Boolean },
   createdOn: { type: Date, default: Date.now },
   attendingSince: { type: Date },
+  note: {
+    type: String,
+    trim: true,
+    maxlength: [100, "Note can be at most 100 characters!"],
+  },
 });
 
 /**
@@ -68,6 +77,13 @@ const signupSchema = new mongoose.Schema({
  *      type: integer
  *      description: Maximum number of attending players (no limit if missing).
  *      example: 12
+ *     cancelled:
+ *      type: boolean
+ *      description: Cancelled events lock signups and don't count in statistics.
+ *     cancelReason:
+ *      type: string
+ *      description: Optional reason shown to players when the event is cancelled.
+ *      example: Igrišče je zaprto zaradi dežja
  *     signedup:
  *      type: array
  *      description: List of users signed up for the event.
@@ -88,6 +104,12 @@ const eventSchema = new mongoose.Schema({
   },
   date: { type: Date, default: Date.now },
   maxPlayers: { type: Number, min: [1, "At least one player is required!"] },
+  cancelled: { type: Boolean, default: false },
+  cancelReason: {
+    type: String,
+    trim: true,
+    maxlength: [200, "Cancel reason can be at most 200 characters!"],
+  },
   signedup: {
     type: [signupSchema],
   },
@@ -100,6 +122,16 @@ const SIGNUP_GRACE_MS = 24 * 60 * 60 * 1000;
 
 eventSchema.methods.isPast = function () {
   return !!this.date && this.date.getTime() + SIGNUP_GRACE_MS < Date.now();
+};
+
+/**
+ * Why signups can't be changed (past or cancelled event), or null when they can
+ */
+eventSchema.methods.signupsClosedReason = function () {
+  if (this.cancelled) return "This event has been cancelled.";
+  if (this.isPast())
+    return "Signups for this event are closed, it has already taken place.";
+  return null;
 };
 
 /**

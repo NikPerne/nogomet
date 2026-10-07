@@ -1,11 +1,11 @@
 import { Component, OnInit, TemplateRef } from "@angular/core";
-import { formatDate } from "@angular/common";
 import { BsModalService, BsModalRef } from "ngx-bootstrap/modal";
 
 import { DemoDataService } from "../../services/demo-data.service";
 import { AuthenticationService } from "../../services/authentication.service";
 import { ConnectionService } from "../../services/connection.service";
 import {
+  DEFAULT_EVENT_TIME,
   Event,
   confirmedSignups,
   hasTimeOfDay,
@@ -15,7 +15,6 @@ import {
 
 const MAX_EVENTS = 1000;
 const PAST_EVENTS_SHOWN = 5;
-const DEFAULT_TIME = "20:00";
 
 const eventTime = (event: Event) => new Date(event.date).getTime();
 
@@ -39,8 +38,8 @@ export class EventListComponent implements OnInit {
   protected showAllPast = false;
   protected message = "";
   protected formDataError = "";
-  protected newEvent: Event = this.emptyEvent();
-  protected newEventTime = DEFAULT_TIME;
+  /** Initial values for the "Add event" form */
+  protected formEvent?: Event;
   protected readonly confirmedCount = (event: Event) =>
     confirmedSignups(event).length;
   protected readonly isEventFull = isEventFull;
@@ -48,6 +47,13 @@ export class EventListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadEvents();
+  }
+
+  /**
+   * The next event that will actually take place (cancelled events are skipped)
+   */
+  protected get nextEvent(): Event | undefined {
+    return this.upcomingEvents.find((event) => !event.cancelled);
   }
 
   protected get visiblePastEvents(): Event[] {
@@ -83,14 +89,8 @@ export class EventListComponent implements OnInit {
       .sort((a, b) => eventTime(b) - eventTime(a));
   }
 
-  protected createEvent(): void {
+  protected createEvent(event: Event): void {
     this.formDataError = "";
-    if (!this.isFormDataValid()) {
-      this.formDataError =
-        "Name, description, date and time are required; max players must be a whole number of at least 1.";
-      return;
-    }
-    const event: Event = { ...this.newEvent, date: this.combinedDate() };
     this.demoDataService.createEvent(event).subscribe({
       next: (createdEvent) => {
         this.setEvents([createdEvent, ...this.upcomingEvents, ...this.pastEvents]);
@@ -101,66 +101,33 @@ export class EventListComponent implements OnInit {
     });
   }
 
-  private isFormDataValid(): boolean {
-    const maxPlayers = this.newEvent.maxPlayers;
-    return !!(
-      this.newEvent.name?.trim() &&
-      this.newEvent.description?.trim() &&
-      this.newEvent.date &&
-      /^\d{2}:\d{2}$/.test(this.newEventTime ?? "") &&
-      (maxPlayers == null || (Number.isInteger(maxPlayers) && maxPlayers >= 1))
-    );
-  }
-
-  private emptyEvent(): Event {
-    return {
-      _id: "",
-      name: "",
-      description: "",
-      date: new Date(),
-      maxPlayers: null,
-    };
-  }
-
   /**
-   * The date picker gives a date; the time comes from the separate time field
+   * Initial values copied from the latest event, one or more weeks later (the weekly match)
    */
-  private combinedDate(): Date {
-    const date = new Date(this.newEvent.date);
-    const [hours, minutes] = this.newEventTime.split(":").map(Number);
-    date.setHours(hours, minutes, 0, 0);
-    return date;
-  }
-
-  /**
-   * Pre-fills the form from the latest event, one week later (the weekly match)
-   */
-  private prefillFromLatestEvent(): void {
+  private prefilledEvent(): Event | undefined {
     const latest = [...this.upcomingEvents, ...this.pastEvents].reduce<
       Event | undefined
     >((max, event) => (!max || eventTime(event) > eventTime(max) ? event : max), undefined);
-    if (!latest) {
-      this.newEvent = this.emptyEvent();
-      this.newEventTime = DEFAULT_TIME;
-      return;
-    }
+    if (!latest) return undefined;
     const date = new Date(latest.date);
+    if (!hasTimeOfDay(latest)) {
+      const [hours, minutes] = DEFAULT_EVENT_TIME.split(":").map(Number);
+      date.setHours(hours, minutes);
+    }
     do date.setDate(date.getDate() + 7);
     while (date.getTime() < Date.now());
-    this.newEvent = {
+    return {
       _id: "",
       name: latest.name,
       description: latest.description,
       date,
       maxPlayers: latest.maxPlayers ?? null,
     };
-    this.newEventTime = hasTimeOfDay(latest)
-      ? formatDate(latest.date, "HH:mm", "sl")
-      : DEFAULT_TIME;
   }
 
   protected openModal(form: TemplateRef<any>): void {
-    this.prefillFromLatestEvent();
+    this.formEvent = this.prefilledEvent();
+    this.formDataError = "";
     this.modalRef = this.modalService.show(form, {
       class: "modal-dialog-centered",
       keyboard: false,
@@ -169,8 +136,6 @@ export class EventListComponent implements OnInit {
   }
 
   protected closeModal(): void {
-    this.newEvent = this.emptyEvent();
-    this.newEventTime = DEFAULT_TIME;
     this.formDataError = "";
     this.modalRef?.hide();
     this.modalRef = undefined;

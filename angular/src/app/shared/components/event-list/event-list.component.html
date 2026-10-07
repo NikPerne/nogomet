@@ -17,21 +17,27 @@
       </div>
     </div>
     <div
-      *ngFor="let event of upcomingEvents; first as first"
+      *ngFor="let event of upcomingEvents"
       class="card-body d-flex justify-content-between align-items-center"
     >
       <a
         [routerLink]="['/events', event._id]"
         class="link-primary text-decoration-none"
-        [ngClass]="{ 'fw-bold': first }"
+        [ngClass]="{
+          'fw-bold': event === nextEvent,
+          'text-decoration-line-through': event.cancelled
+        }"
         ><i class="fa-solid fa-regular fa-calendar-days me-2"></i
         >{{ event.date | date : "EEE, d. MMMM, yyyy" : undefined : "sl"
         }}<ng-container *ngIf="hasTimeOfDay(event)"
           >, {{ event.date | date : "HH:mm" }}</ng-container
         ></a
       >
-      <span>
-        <span *ngIf="first" class="badge bg-success me-2">Naslednji</span>
+      <span *ngIf="event.cancelled" class="badge bg-dark">Odpovedano</span>
+      <span *ngIf="!event.cancelled">
+        <span *ngIf="event === nextEvent" class="badge bg-success me-2"
+          >Naslednji</span
+        >
         <span
           class="badge"
           [ngClass]="isEventFull(event) ? 'bg-danger' : 'bg-secondary'"
@@ -60,10 +66,15 @@
       <a
         [routerLink]="['/events', event._id]"
         class="link-secondary text-decoration-none"
+        [ngClass]="{ 'text-decoration-line-through': event.cancelled }"
         ><i class="fa-regular fa-calendar-days me-2"></i
-        >{{ event.date | date : "d. MMMM, yyyy" : "CEST" : "sl" }}</a
+        >{{ event.date | date : "d. MMMM, yyyy" : undefined : "sl" }}</a
       >
-      <span class="badge bg-light text-dark" title="Število udeležencev"
+      <span *ngIf="event.cancelled" class="badge bg-dark">Odpovedano</span>
+      <span
+        *ngIf="!event.cancelled"
+        class="badge bg-light text-dark"
+        title="Število udeležencev"
         ><i class="fa-solid fa-user me-1"></i>{{ confirmedCount(event) }}</span
       >
     </div>
@@ -98,96 +109,12 @@
   >
 </ng-template>
 <ng-template #eventForm>
-  <div class="modal-header">
-    <h4 class="modal-title pull-left">
-      <i class="fa-regular fa-calendar-plus pe-2"></i>Add event
-    </h4>
-    <small
-      *ngIf="upcomingEvents.length || pastEvents.length"
-      class="text-secondary ms-3"
-      >Pre-filled from the latest event</small
-    >
-    <button
-      type="button"
-      class="btn-close close pull-right"
-      aria-label="Close"
-      (click)="closeModal()"
-    >
-      <span aria-hidden="true" class="visually-hidden">&times;</span>
-    </button>
-  </div>
-  <div class="modal-body">
-    <div class="alert alert-dark p-2" [hidden]="!formDataError">
-      <i class="fa-solid fa-triangle-exclamation pe-2"></i>{{ formDataError }}
-    </div>
-    <div class="form-group">
-      <label for="event-name" class="form-label mt-2">Name of event</label>
-      <input
-        id="event-name"
-        [(ngModel)]="newEvent.name"
-        class="form-control form-control-sm"
-        placeholder="Enter name"
-      />
-    </div>
-    <div class="form-group">
-      <label for="event-description" class="form-label mt-2"
-        >Description of event</label
-      >
-      <textarea
-        id="event-description"
-        [(ngModel)]="newEvent.description"
-        rows="3"
-        class="form-control form-control-sm"
-        placeholder="Enter description"
-      ></textarea>
-    </div>
-    <div class="form-group">
-      <label for="event-date" class="form-label mt-2">Date of event</label>
-      <mat-form-field>
-        <input
-          id="event-date"
-          matInput
-          [matDatepicker]="datepicker"
-          placeholder="Choose a date"
-          [(ngModel)]="newEvent.date"
-        />
-        <mat-datepicker-toggle
-          matIconSuffix
-          [for]="datepicker"
-        ></mat-datepicker-toggle>
-        <mat-datepicker #datepicker></mat-datepicker>
-      </mat-form-field>
-    </div>
-    <div class="form-group">
-      <label for="event-time" class="form-label mt-2">Start time</label>
-      <input
-        id="event-time"
-        type="time"
-        [(ngModel)]="newEventTime"
-        class="form-control form-control-sm"
-      />
-    </div>
-    <div class="form-group">
-      <label for="event-max-players" class="form-label mt-2"
-        >Max players <small class="text-secondary">(optional)</small></label
-      >
-      <input
-        id="event-max-players"
-        type="number"
-        min="1"
-        step="1"
-        [(ngModel)]="newEvent.maxPlayers"
-        class="form-control form-control-sm"
-        placeholder="No limit"
-      />
-    </div>
-  </div>
-  <div class="modal-footer">
-    <button type="button" class="btn btn-sm btn-secondary" (click)="closeModal()">
-      <i class="fa-regular fa-circle-xmark me-1"></i>Cancel
-    </button>
-    <button type="button" class="btn btn-sm btn-primary" (click)="createEvent()">
-      <i class="fa-regular fa-circle-check me-2"></i>Save
-    </button>
-  </div>
+  <app-event-form
+    title="Add event"
+    [hint]="formEvent ? 'Pre-filled from the latest event' : ''"
+    [event]="formEvent"
+    [error]="formDataError"
+    (save)="createEvent($event)"
+    (dismiss)="closeModal()"
+  ></app-event-form>
 </ng-template>

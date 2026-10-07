@@ -2,10 +2,18 @@ const mongoose = require("mongoose");
 const Event = mongoose.model("Event");
 const { parseLimit, isValidId } = require("./helpers");
 
-const EDITABLE_FIELDS = ["name", "description", "date", "maxPlayers"];
+const EDITABLE_FIELDS = [
+  "name",
+  "description",
+  "date",
+  "maxPlayers",
+  "cancelled",
+  "cancelReason",
+];
 
 /**
- * Picks editable fields from the body; an empty maxPlayers removes the limit
+ * Picks editable fields from the body; an empty maxPlayers removes the limit,
+ * and restoring a cancelled event clears its cancel reason
  */
 const pickEditableFields = (body) => {
   const fields = Object.fromEntries(
@@ -14,6 +22,8 @@ const pickEditableFields = (body) => {
     )
   );
   if (fields.maxPlayers === "") fields.maxPlayers = null;
+  if (fields.cancelled === false || fields.cancelled === "false")
+    fields.cancelReason = null;
   return fields;
 };
 
@@ -129,7 +139,8 @@ const createEvent = async (req, res) => {
  * @openapi
  * /events/{eventId}:
  *   put:
- *     summary: Update an event's name, description, date or maxPlayers (administrators only)
+ *     summary: Update an event (administrators only)
+ *     description: Accepts name, description, date, maxPlayers, cancelled and cancelReason. Send cancelled=true to cancel and cancelled=false to restore.
  *     tags: [Events]
  *     security:
  *      - jwt: []
