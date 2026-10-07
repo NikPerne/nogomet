@@ -5,17 +5,13 @@ import { Signup } from "../classes/signup";
   name: "mostRecentSignup",
 })
 export class MostRecentSignupPipe implements PipeTransform {
+  /**
+   * Returns a new array sorted newest first; the input array is not mutated
+   */
   transform(signups: Signup[] | undefined): Signup[] | undefined {
-    if (signups && signups.length > 0) {
-      signups = signups.sort((a, b) => {
-        let order = 0;
-        if (b.createdOn && a.createdOn) {
-          if (b.createdOn > a.createdOn) order = 1;
-          else if (b.createdOn < a.createdOn) order = -1;
-        }
-        return order;
-      });
-    }
-    return signups;
+    if (!signups) return signups;
+    const time = (signup: Signup) =>
+      signup.createdOn ? new Date(signup.createdOn).getTime() : 0;
+    return [...signups].sort((a, b) => time(b) - time(a));
   }
 }

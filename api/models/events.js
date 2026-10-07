@@ -13,6 +13,9 @@ const mongoose = require("mongoose");
  *      type: string
  *      description: Name of the user signing up.
  *      example: Nik Perne
+ *     userId:
+ *      type: string
+ *      description: ID of the user who created the signup (missing on legacy signups).
  *     attending:
  *      type: boolean
  *      description: Indicates whether the user is attending the event.
@@ -30,9 +33,8 @@ const mongoose = require("mongoose");
 
 const signupSchema = new mongoose.Schema({
   name: { type: String, required: [true, "Name is required!"] },
-  attending: {
-    type: Boolean
-  },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  attending: { type: Boolean },
   createdOn: { type: Date, default: Date.now },
 });
 
@@ -69,7 +71,7 @@ const signupSchema = new mongoose.Schema({
  *     - signedup
  */
 
-const eventSchema = mongoose.Schema({
+const eventSchema = new mongoose.Schema({
   name: { type: String, required: [true, "Name is required!"] },
   description: {
     type: String,
@@ -79,9 +81,6 @@ const eventSchema = mongoose.Schema({
   signedup: {
     type: [signupSchema],
   },
-  pridemCount: {
-    type: Number
-  }
 });
 
 mongoose.model("Event", eventSchema, "Events");

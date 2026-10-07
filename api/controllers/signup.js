@@ -1,24 +1,40 @@
 const mongoose = require("mongoose");
 const Event = mongoose.model("Event");
-const User = mongoose.model("User"); // Assuming you have a User model for handling user data
+const User = mongoose.model("User");
+const { isValidId } = require("./helpers");
 
-const getAuthor = async (req, res, cbResult) => {
-  if (req.auth?.email) {
-    try {
-      let user = await User.findOne({ email: req.auth.email }).exec();
-      if (!user) res.status(401).json({ message: "User not found." });
-      else cbResult(req, res, user);
-    } catch (err) {
-      res.status(500).json({ message: err.message });
-    }
-  }
+/**
+ * Form bodies send booleans as strings, so accept both representations
+ */
+const parseAttending = (value) => {
+  if (value === true || value === "true") return true;
+  if (value === false || value === "false") return false;
+  return undefined;
 };
+
+/**
+ * Signups created before userId was stored can only be matched by name
+ */
+const isOwnSignup = (signup, user) =>
+  signup.userId ? signup.userId.equals(user._id) : signup.name === user.name;
+
+/**
+ * timesSignedUp counts only signups where the user is attending ("Pridem")
+ */
+const changeTimesSignedUp = (userId, delta) =>
+  User.updateOne(
+    delta < 0 ? { _id: userId, timesSignedUp: { $gt: 0 } } : { _id: userId },
+    { $inc: { timesSignedUp: delta } }
+  ).exec();
+
+const eventNotFound = (res, eventId) =>
+  res.status(404).json({ message: `Event with id '${eventId}' not found.` });
 
 /**
  * @openapi
  * /events/{eventId}/signups:
  *   post:
- *     summary: Create a new signup for an event
+ *     summary: Sign the current user up for an event
  *     tags: [Signups]
  *     security:
  *      - jwt: []
@@ -28,73 +44,58 @@ const getAuthor = async (req, res, cbResult) => {
  *         description: ID of the event to sign up for
  *         schema:
  *           type: string
- *       - in: body
- *         name: body
- *         description: Signup details
- *         required: true
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 attending:
- *                   type: boolean
- *                   description: Whether the user is attending the event or not
- *               required:
- *                 - attending
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/x-www-form-urlencoded:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               attending:
+ *                 type: boolean
+ *                 description: Whether the user is attending the event or not
+ *             required:
+ *               - attending
  *     responses:
  *       '201':
  *         description: Successful response with the created signup
  *       '400':
- *         description: Invalid request, missing parameters, or attending not provided
+ *         description: Body parameter 'attending' missing or invalid
+ *       '401':
+ *         description: Not authenticated
  *       '404':
  *         description: Event not found
+ *       '409':
+ *         description: User has already signed up for this event
  *       '500':
  *         description: Internal server error
  */
-
 const signupCreate = async (req, res) => {
-  getAuthor(req, res, async (req, res, author) => {
-    const { eventId } = req.params;
-    if (!eventId)
-      res
-        .status(400)
-        .json({ message: "Path parameter 'locationId' is required." });
-    else {
-      try {
-        let event = await Event.findById(eventId)
-          .select("signedup")
-          .exec();
-        doSignup(req, res, event, author.name);
-        author.timesSignedUp++;
-        await author.save();
-      } catch (err) {
-        res.status(500).json({ message: err.message });
-      }
-    }
-  });
-};
+  const { eventId } = req.params;
+  const attending = parseAttending(req.body.attending);
+  if (attending === undefined)
+    return res.status(400).json({
+      message: "Body parameter 'attending' is required and must be a boolean.",
+    });
+  if (!isValidId(eventId)) return eventNotFound(res, eventId);
+  try {
+    const event = await Event.findById(eventId).select("signedup").exec();
+    if (!event) return eventNotFound(res, eventId);
+    if (event.signedup.some((signup) => isOwnSignup(signup, req.user)))
+      return res
+        .status(409)
+        .json({ message: "You have already signed up for this event." });
 
-const doSignup = async (req, res, event, name) => {
-  if (!event)
-    res.status(404).json({
-      message: `Event with id '${req.params.eventId}' not found.`,
-    });
-  else if (!req.body.attending)
-    res.status(400).json({
-      message: "Body parameters 'attending' required",
-    });
-  else {
     event.signedup.push({
-      name: name,
-      attending: req.body.attending,
+      name: req.user.name,
+      userId: req.user._id,
+      attending,
     });
-    try {
-      await event.save();
-      res.status(201).json(event.signedup.slice(-1).pop());
-    } catch (err) {
-      res.status(500).json({ message: err.message });
-    }
+    await event.save();
+    if (attending) await changeTimesSignedUp(req.user._id, 1);
+    res.status(201).json(event.signedup[event.signedup.length - 1]);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -104,8 +105,6 @@ const doSignup = async (req, res, event, name) => {
  *   get:
  *     summary: Get details of a specific signup for an event
  *     tags: [Signups]
- *     security:
- *      - jwt: []
  *     parameters:
  *       - in: path
  *         name: eventId
@@ -120,41 +119,26 @@ const doSignup = async (req, res, event, name) => {
  *     responses:
  *       '200':
  *         description: Successful response with the event and signup details
- *       '400':
- *         description: Invalid request or missing parameters
  *       '404':
  *         description: Event or signup not found
  *       '500':
  *         description: Internal server error
  */
-
-const SignUpReadOne = async (req, res) => {
+const signupReadOne = async (req, res) => {
+  const { eventId, signupId } = req.params;
+  if (!isValidId(eventId)) return eventNotFound(res, eventId);
   try {
-    let event = await Event.findById(req.params.eventId)
-      .select("name signups")
-      .exec();
-    if (!event)
-      res.status(404).json({
-        message: `Event with id '${req.params.eventId}' not found`,
-      });
-    else if (!event.signup || event.signup.length == 0)
-      res.status(404).json({ message: "No signups found." });
-    else {
-      let signup = event.signup.id(req.params.signupId);
-      if (!signup)
-        res.status(404).json({
-          message: `Signup with id '${req.params.signupId}' not found.`,
-        });
-      else {
-        res.status(200).json({
-          event: {
-            _id: req.params.eventId,
-            name: event.name,
-          },
-          signup,
-        });
-      }
-    }
+    const event = await Event.findById(eventId).select("name signedup").exec();
+    if (!event) return eventNotFound(res, eventId);
+    const signup = isValidId(signupId) ? event.signedup.id(signupId) : null;
+    if (!signup)
+      return res
+        .status(404)
+        .json({ message: `Signup with id '${signupId}' not found.` });
+    res.status(200).json({
+      event: { _id: event._id, name: event.name },
+      signup,
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -164,7 +148,7 @@ const SignUpReadOne = async (req, res) => {
  * @openapi
  * /events/{eventId}/signups/{signupId}:
  *   delete:
- *     summary: Delete a signup for an event
+ *     summary: Delete one of the current user's signups
  *     tags: [Signups]
  *     security:
  *      - jwt: []
@@ -182,8 +166,8 @@ const SignUpReadOne = async (req, res) => {
  *     responses:
  *       '204':
  *         description: Successful response, no content
- *       '400':
- *         description: Invalid request or missing parameters
+ *       '401':
+ *         description: Not authenticated
  *       '403':
  *         description: Not authorized to delete this signup
  *       '404':
@@ -191,53 +175,34 @@ const SignUpReadOne = async (req, res) => {
  *       '500':
  *         description: Internal server error
  */
+const signupDeleteOne = async (req, res) => {
+  const { eventId, signupId } = req.params;
+  if (!isValidId(eventId)) return eventNotFound(res, eventId);
+  try {
+    const event = await Event.findById(eventId).select("signedup").exec();
+    if (!event) return eventNotFound(res, eventId);
+    const signup = isValidId(signupId) ? event.signedup.id(signupId) : null;
+    if (!signup)
+      return res
+        .status(404)
+        .json({ message: `Signup with id '${signupId}' not found.` });
+    if (!isOwnSignup(signup, req.user))
+      return res
+        .status(403)
+        .json({ message: "Not authorized to delete this signup." });
 
-const signUpDeleteOne = async (req, res) => {
-  const { eventId, signupId, userId } = req.params;
-  if (!eventId || !signupId)
-    res.status(400).json({
-      message: "Path parameters 'eventId' and 'signupId' are required.",
-    });
-  else {
-    try {
-      let event = await Event.findById(eventId)
-        .select("signedup")
-        .exec();
-      if (!event)
-        res.status(404).json({
-          message: `Event with id '${eventId}' not found.`,
-        });
-      else if (event.signedup && event.signedup.length > 0) {
-        const signup = event.signedup.id(signupId);
-        if (!signup)
-          res.status(404).json({
-            message: `Signup with id '${signupId}' not found.`,
-          });
-        else {
-          getAuthor(req, res, async (req, res, author) => {
-            if (signup.name != author.name) {
-              res.status(403).json({
-                message: "Not authorized to delete this signup.",
-              });
-            } else {
-              signup.deleteOne();
-
-              author.timesSignedUp--;
-              await author.save();
-              await event.save();
-              res.status(204).send();
-            }
-          });
-        }
-      } else res.status(404).json({ message: "No signups found." });
-    } catch (err) {
-      res.status(500).json({ message: err.message });
-    }
+    const wasAttending = signup.attending;
+    signup.deleteOne();
+    await event.save();
+    if (wasAttending) await changeTimesSignedUp(req.user._id, -1);
+    res.status(204).send();
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
 module.exports = {
   signupCreate,
-  signUpDeleteOne,
-  SignUpReadOne,
+  signupReadOne,
+  signupDeleteOne,
 };

@@ -5,7 +5,6 @@ registerLocaleData(localeSl, "sl");
 import { BrowserModule } from "@angular/platform-browser";
 import { HttpClientModule } from "@angular/common/http";
 import { ModalModule, BsModalService } from "ngx-bootstrap/modal";
-import { RatingModule } from 'ngx-bootstrap/rating';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
@@ -55,7 +54,6 @@ import { MostRecentSignupPipe } from './shared/pipes/most-recent-signup.pipe';
     AppRoutingModule,
     BrowserAnimationsModule,
     ModalModule,
-    RatingModule,
     FormsModule,
     ServiceWorkerModule.register('ngsw-worker.js', {
       enabled: !isDevMode(),

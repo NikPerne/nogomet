@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from "@angular/core";
+import { Component, Input } from "@angular/core";
 import { DemoDataService } from "../../services/demo-data.service";
 import { Event } from "../../classes/event";
 import { AuthenticationService } from "../../services/authentication.service";
@@ -7,129 +7,80 @@ import { User } from "../../classes/user";
 import { Signup } from "../../classes/signup";
 
 @Component({
-  selector: 'app-event-details',
+  selector: "app-event-details",
   templateUrl: "event-details.component.html",
-  styles: []
+  styles: [],
 })
-export class EventDetailsComponent implements OnInit {
-  
-  pridemCount: number = 0;
-
+export class EventDetailsComponent {
   constructor(
     private demoDataService: DemoDataService,
     private authenticationService: AuthenticationService,
     private connectionService: ConnectionService
-  ) { }
+  ) {}
 
   @Input() event!: Event;
 
-  
-  ngOnInit() {
-    this.fetchEventDetails();
+  protected errorMessage = "";
+
+  /**
+   * Number of users attending ("Pridem"), derived from the signups
+   */
+  public get attendingCount(): number {
+    return this.event?.signedup?.filter((signup) => signup.attending).length ?? 0;
   }
-
-  protected newSignupPridem: Signup = {
-    name: "",
-    createdOn: new Date(),
-    attending: true,
-  };
-
-  protected newSignupNe: Signup = {
-    name: "",
-    createdOn: new Date(),
-    attending: false,
-  };
 
   public isConnected(): boolean {
-    if (!this.connectionService.isConnected) this.isLoggedIn();
     return this.connectionService.isConnected;
-  }
-
-  fetchEventDetails() {
-    const eventId = this.event._id;
-    this.demoDataService.getEventDetails(eventId).subscribe((event) => {
-    this.event = event;
-    this.pridemCount = event.pridemCount ?? 0; // Update the pridemCount property, defaulting to 0 if undefined
-    });
-  }
-
-  updateEventInDatabase() {
-    const updatedEvent = { ...this.event, pridemCount: this.pridemCount };
-    this.demoDataService.updateEvent(this.event._id, updatedEvent).subscribe({
-      next: (updatedEvent) => {
-        this.event = updatedEvent;
-      },
-      error: (err) => {
-        console.log('Error updating event:', err);
-      }
-    });
-  }
-
-  protected signUpForEvent() {
-    this.newSignupPridem.name = this.getCurrentUser();
-    this.demoDataService
-      .signUpForEvent(this.event._id, this.newSignupPridem)
-      .subscribe({
-        next: (signedUp: Signup) => {
-          this.event?.signedup?.unshift(signedUp);
-          this.pridemCount++; // Increment the pridemCount
-          this.updateEventInDatabase(); // Call a new method to update the event
-        },
-        error: (err) => {
-          "Error adding signup.";
-        },
-      });
-  }
-
-  protected signUpForEventNe() {
-    this.newSignupNe.name = this.getCurrentUser();
-    this.demoDataService
-      .signUpForEvent(this.event._id, this.newSignupNe)
-      .subscribe({
-        next: (signedUp: Signup) => {
-          this.event?.signedup?.unshift(signedUp);
-          this.updateEventInDatabase(); // Call the new method to update the event
-        },
-        error: (err) => {
-          "Error adding signup.";
-        },
-      });
-  }
-
-  isUserSignedUp() {
-    return this.event.signedup?.some(signup => {
-      return signup.name === this.getCurrentUser(); 
-    });
-  }
-
-  protected deleteSignup(signupId: string | undefined): void {
-    if (signupId) {
-      this.demoDataService
-        .deleteSignUpFromEvent(this.event._id, signupId)
-        .subscribe({
-          next: () => {
-            this.event.signedup = this.event.signedup?.filter(
-              (signup) => signup._id !== signupId
-            );
-          },
-          error: (err) => {
-            console.log(err);
-          },
-        });
-    }
   }
 
   public isLoggedIn(): boolean {
     return this.authenticationService.isLoggedIn();
   }
 
-  public getCurrentUser(): string {
+  protected signUp(attending: boolean): void {
+    this.errorMessage = "";
+    const signup: Signup = { name: this.getCurrentUserName(), attending };
+    this.demoDataService.signUpForEvent(this.event._id, signup).subscribe({
+      next: (created: Signup) => {
+        this.event.signedup = [created, ...(this.event.signedup ?? [])];
+      },
+      error: (err) => (this.errorMessage = err),
+    });
+  }
+
+  protected deleteSignup(signupId: string | undefined): void {
+    if (!signupId) return;
+    this.errorMessage = "";
+    this.demoDataService
+      .deleteSignUpFromEvent(this.event._id, signupId)
+      .subscribe({
+        next: () => {
+          this.event.signedup = this.event.signedup?.filter(
+            (signup) => signup._id !== signupId
+          );
+        },
+        error: (err) => (this.errorMessage = err),
+      });
+  }
+
+  public isUserSignedUp(): boolean {
+    return this.event?.signedup?.some((signup) => this.isOwnSignup(signup)) ?? false;
+  }
+
+  public canDeleteSignUp(signup: Signup): boolean {
+    return this.isLoggedIn() && this.isOwnSignup(signup);
+  }
+
+  /**
+   * Signups created before userId was stored can only be matched by name
+   */
+  private isOwnSignup(signup: Signup): boolean {
     const user: User | null = this.authenticationService.getCurrentUser();
-    return user ? user.name : "Guest";
+    if (!user) return false;
+    return signup.userId ? signup.userId === user._id : signup.name === user.name;
   }
 
-  public canDeleteSignUp(signedUp: Signup): boolean {
-    return this.isLoggedIn() && this.getCurrentUser() === signedUp.name;
+  private getCurrentUserName(): string {
+    return this.authenticationService.getCurrentUser()?.name ?? "Guest";
   }
-
 }

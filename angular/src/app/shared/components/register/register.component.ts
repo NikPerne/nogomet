@@ -103,7 +103,7 @@ export class RegisterComponent {
     )
       this.formError = "All fields are required, please try again.";
     else if (
-      !/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(
+      !/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,})+$/.test(
         this.credentials.email
       )
     )

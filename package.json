@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "build": "npm install && cd angular && npm run build-ang",
+    "build": "npm install && cd angular && npm run build-prod",
     "test": "mocha test --bail --exit --reporter mochawesome --reporter-options autoOpen=true,reportDir=test/report,reportFilename=report,json=false"
   },
   "dependencies": {

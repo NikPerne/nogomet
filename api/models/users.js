@@ -56,10 +56,9 @@ usersSchema.methods.setPassword = function (password) {
 };
 
 usersSchema.methods.validPassword = function (password) {
-  const hash = crypto
-    .pbkdf2Sync(password, this.salt, 1000, 64, "sha512")
-    .toString("hex");
-  return this.hash === hash;
+  const hash = crypto.pbkdf2Sync(password, this.salt, 1000, 64, "sha512");
+  const stored = Buffer.from(this.hash, "hex");
+  return stored.length === hash.length && crypto.timingSafeEqual(stored, hash);
 };
 
 usersSchema.methods.generateJwt = function () {
@@ -70,6 +69,7 @@ usersSchema.methods.generateJwt = function () {
       _id: this._id,
       email: this.email,
       name: this.name,
+      admin: this.admin,
       exp: parseInt(expiry.getTime() / 1000),
     },
     process.env.JWT_SECRET

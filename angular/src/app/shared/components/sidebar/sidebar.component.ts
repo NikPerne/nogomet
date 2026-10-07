@@ -78,19 +78,16 @@ export class SidebarComponent implements OnInit {
   }
 
   getUsers() {
-    this.demoDataService.getUsers(10).subscribe((users) => {
-      this.users = users;
-  
-      // Create new data array in the required format
-      const newData = this.users.map((user) => {
-        return { x: user.name, y: user.timesSignedUp };
-      });
-  
-      // Update the chartOptions with the new data
-      this.chartOptions = {
-        ...this.chartOptions,
-        series: [{ data: newData }],
-      };
+    this.demoDataService.getUsers(10).subscribe({
+      next: (users) => {
+        this.users = users;
+        const data = users.map((user) => ({ x: user.name, y: user.timesSignedUp }));
+        this.chartOptions = {
+          ...this.chartOptions,
+          series: [{ name: "Obiskal", data }],
+        };
+      },
+      error: (err) => console.error("Error loading users:", err),
     });
   }
 }

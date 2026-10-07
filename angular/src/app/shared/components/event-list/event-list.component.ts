@@ -1,117 +1,77 @@
-import { Component, OnInit, TemplateRef, Inject } from '@angular/core';
+import { Component, OnInit, TemplateRef } from "@angular/core";
 import { BsModalService, BsModalRef } from "ngx-bootstrap/modal";
 
 import { DemoDataService } from "../../services/demo-data.service";
 import { AuthenticationService } from "../../services/authentication.service";
 import { ConnectionService } from "../../services/connection.service";
 import { Event } from "../../classes/event";
-import { User } from "../../classes/user";
+
+const MAX_EVENTS = 1000;
 
 @Component({
-  selector: 'app-event-list',
+  selector: "app-event-list",
   templateUrl: "event-list.component.html",
-  styles: [
-  ]
+  styles: [],
 })
 export class EventListComponent implements OnInit {
-  modalRef?: BsModalRef;
-  constructor( 
-    private modalService: BsModalService,   
+  constructor(
+    private modalService: BsModalService,
     private demoDataService: DemoDataService,
     private authenticationService: AuthenticationService,
     private connectionService: ConnectionService
-    ) {}
-  
-    ngOnInit() {
-      this.getEvents();
-    }
+  ) {}
 
-    private filterLocations = {
-      nResults: 1000,
-    };
+  private modalRef?: BsModalRef;
 
+  protected events: Event[] = [];
+  protected message = "";
+  protected formDataError = "";
+  protected newEvent: Event = this.emptyEvent();
 
-  protected events!: Event[];
-  protected user!: User;
-  protected newEvent: Event = {
-    name: "",
-    description: "",
-    date: new Date(),
-    _id: ''
+  ngOnInit(): void {
+    this.loadEvents();
   }
 
-  protected message!: string;
-
-  private getEvents = () => {
-    this.message = "Loading nearby events ...";
-    this.demoDataService
-      .getEvents(
-        this.filterLocations.nResults
-      )
-      .subscribe((events) => {
-        this.message = events.length > 0 ? "" : "No events found!";
+  private loadEvents(): void {
+    this.message = "Loading events ...";
+    this.demoDataService.getEvents(MAX_EVENTS).subscribe({
+      next: (events) => {
         this.events = events;
-      });
-  };
-
-/*    private getEvents = () => {
-    this.demoDataService.getEvents(10).subscribe({
-      next: (apiEvents: any[]) => {
-        this.events = apiEvents.map(apiEvent => {
-          const event: Event = {
-            // map API event properties to Event interface  
-            _id: apiEvent._id,
-            name: apiEvent.name,
-            description: apiEvent.description,
-            date: apiEvent.date
-          };
-          return event;
-        });
-      }
+        this.message = events.length > 0 ? "" : "No events found!";
+      },
+      error: (err) => (this.message = err),
     });
-  } */
+  }
+
+  protected createEvent(): void {
+    this.formDataError = "";
+    if (!this.isFormDataValid()) {
+      this.formDataError = "All fields are required.";
+      return;
+    }
+    this.demoDataService.createEvent(this.newEvent).subscribe({
+      next: (createdEvent) => {
+        this.events = [createdEvent, ...this.events];
+        this.message = "";
+        this.closeModal();
+      },
+      error: (err) => (this.formDataError = err),
+    });
+  }
 
   private isFormDataValid(): boolean {
-    let isValid = false;
-    if (
-      this.newEvent.name &&
-      this.newEvent.description &&
+    return !!(
+      this.newEvent.name?.trim() &&
+      this.newEvent.description?.trim() &&
       this.newEvent.date
-    ) {
-      isValid = true;
-    }
-    return isValid;
+    );
   }
 
-  createEvent() {
-    this.formDataError = "";
-      if (this.isFormDataValid()) {
-        this.demoDataService.createEvent(this.newEvent).subscribe({
-          next: (createdEvent) => {
-            this.getEvents;
-            // Add created event to array
-            this.events?.unshift(createdEvent);
-            // Reload events
-            this.demoDataService.getEvents(10);
-            // Reset form
-            this.newEvent = new Event();
-            // Close modal
-            this.closeModal();
-            this.getEvents;
-          },
-          error: (error) => {
-            this.formDataError = error;
-          }
-        });
-      } else {
-        this.formDataError =
-          "All fields required, including rating between 1 and 5.";
-      }
+  private emptyEvent(): Event {
+    return { _id: "", name: "", description: "", date: new Date() };
   }
 
-  protected formDataError!: string;
-
-  protected openModal(form: TemplateRef<any>) {
+  protected openModal(form: TemplateRef<any>): void {
     this.modalRef = this.modalService.show(form, {
       class: "modal-dialog-centered",
       keyboard: false,
@@ -119,32 +79,24 @@ export class EventListComponent implements OnInit {
     });
   }
 
-  protected closeModal() {
-    this.newEvent = {
-      _id: "",
-      name: "",
-      description: "",
-      date: new Date,
-    };
+  protected closeModal(): void {
+    this.newEvent = this.emptyEvent();
     this.formDataError = "";
     this.modalRef?.hide();
+    this.modalRef = undefined;
   }
 
   public isLoggedIn(): boolean {
     return this.authenticationService.isLoggedIn();
   }
 
+  public isAdmin(): boolean {
+    return this.authenticationService.getCurrentUser()?.admin ?? false;
+  }
+
   public isConnected(): boolean {
-    if (!this.connectionService.isConnected) this.closeModal();
+    // Close an open form when the connection drops, since it can't be saved
+    if (!this.connectionService.isConnected && this.modalRef) this.closeModal();
     return this.connectionService.isConnected;
-  }
-
-  public getCurrentUser(): boolean {
-    const user: User | null = this.authenticationService.getCurrentUser();
-    return user ? user.admin : false;
-  }
-
-  isAdmin(user: User): boolean {
-    return this.getCurrentUser() === user.admin;
   }
 }

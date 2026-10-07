@@ -1,4 +1,3 @@
-
 <div class="col-12">
   <div class="alert alert-dark mt-4 p-2" [hidden]="!message">
     <i class="fa-solid fa-triangle-exclamation pe-2"></i>{{ message }}
@@ -10,10 +9,8 @@
       <div class="d-flex justify-content-between align-items-center">
         <div>
           <h4 class="mt-1 mb-1">
-            <a
-              class="link-primary text-decoration-none"
-              ><i class="fa-solid fa-futbol me-2"></i
-              >Nogomet</a
+            <a class="link-primary text-decoration-none"
+              ><i class="fa-solid fa-futbol me-2"></i>Nogomet</a
             >
           </h4>
         </div>
@@ -29,98 +26,90 @@
     </div>
   </div>
 </div>
-<br>
-<div *ngIf="getCurrentUser(); else elseBlock">admin lahko dodaja dogodke</div>
-<ng-template #elseBlock>
-  <div
-  [ngSwitch]="isLoggedIn()">
-      <a
-        *ngSwitchCase="true"
-        class="btn btn-primary btn-sm"
-        [ngClass]="{ 'disabled': !isConnected() }"
-        (click)="openModal(eventForm)"
-        ><i class="fa-regular fa-comment-dots pe-2"></i
-        ><span>Add Event</span></a
-      >
-      <a
-        *ngSwitchDefault
-        routerLink="/login"
-        class="btn btn-primary btn-sm"
-        [ngClass]="{ 'disabled': !isConnected() }"
-        ><i class="fa-solid fa-right-to-bracket pe-2"></i>Login to create
-        event</a
-      >
-  </div>
+<br />
+<ng-container *ngIf="isLoggedIn(); else loginLink">
+  <a
+    *ngIf="isAdmin(); else adminOnly"
+    class="btn btn-primary btn-sm"
+    [ngClass]="{ disabled: !isConnected() }"
+    (click)="openModal(eventForm)"
+    ><i class="fa-regular fa-calendar-plus pe-2"></i><span>Add Event</span></a
+  >
+  <ng-template #adminOnly>
+    <div>Samo admin lahko dodaja dogodke.</div>
+  </ng-template>
+</ng-container>
+<ng-template #loginLink>
+  <a
+    routerLink="/login"
+    class="btn btn-primary btn-sm"
+    [ngClass]="{ disabled: !isConnected() }"
+    ><i class="fa-solid fa-right-to-bracket pe-2"></i>Login to create event</a
+  >
 </ng-template>
 <ng-template #eventForm>
-    <div class="modal-header">
-      <h4 class="modal-title pull-left">
-        <i class="fa-regular fa-comment-dots pe-2"></i>Add comment
-      </h4>
-      <button
-        type="button"
-        class="btn-close close pull-right"
-        aria-label="Close"
-        (click)="closeModal()"
-      >
-        <span aria-hidden="true" class="visually-hidden">&times;</span>
-      </button>
+  <div class="modal-header">
+    <h4 class="modal-title pull-left">
+      <i class="fa-regular fa-calendar-plus pe-2"></i>Add event
+    </h4>
+    <button
+      type="button"
+      class="btn-close close pull-right"
+      aria-label="Close"
+      (click)="closeModal()"
+    >
+      <span aria-hidden="true" class="visually-hidden">&times;</span>
+    </button>
+  </div>
+  <div class="modal-body">
+    <div class="alert alert-dark p-2" [hidden]="!formDataError">
+      <i class="fa-solid fa-triangle-exclamation pe-2"></i>{{ formDataError }}
     </div>
-    <div class="modal-body">
-      <div class="alert alert-dark p-2" [hidden]="!formDataError">
-        <i class="fa-solid fa-triangle-exclamation pe-2"></i>{{ formDataError }}
-      </div>
-      <div class="form-group">
-        <label for="name" class="form-label mt-2">Name of event</label>
-        <textarea
-          id="event"
-          [(ngModel)]="newEvent.name"
-          rows="3"
-          class="form-control form-control-sm"
-          placeholder="Enter name"
-        ></textarea>
-      </div>
-      <div class="form-group">
-        <label for="description" class="form-label mt-2">Description of event</label>
-        <textarea
-          id="event"
-          [(ngModel)]="newEvent.description"
-          rows="3"
-          class="form-control form-control-sm"
-          placeholder="Enter description"
-        ></textarea>
-      </div>
-      <div class="form-group">
-        <label for="date" class="form-label mt-2">Date of event</label>
-        
-        <mat-form-field>
-          <input 
-            matInput 
-            [matDatepicker]="datepicker"
-            placeholder="Choose a date"
-            [(ngModel)]="newEvent.date">
-          <mat-datepicker-toggle 
-            matIconSuffix  
-            [for]="datepicker"></mat-datepicker-toggle>
-          <mat-datepicker #datepicker></mat-datepicker>
-        </mat-form-field>
-      
-      </div>
+    <div class="form-group">
+      <label for="event-name" class="form-label mt-2">Name of event</label>
+      <input
+        id="event-name"
+        [(ngModel)]="newEvent.name"
+        class="form-control form-control-sm"
+        placeholder="Enter name"
+      />
     </div>
-    <div class="modal-footer">
-      <button
-        type="button"
-        class="btn btn-sm btn-secondary"
-        (click)="closeModal()"
+    <div class="form-group">
+      <label for="event-description" class="form-label mt-2"
+        >Description of event</label
       >
-        <i class="fa-regular fa-circle-xmark me-1"></i>Cancel
-      </button>
-      <button
-        type="button"
-        class="btn btn-sm btn-primary"
-        (click)="createEvent()"
-      >
-        <i class="fa-regular fa-circle-check me-2"></i>Save
-      </button>
+      <textarea
+        id="event-description"
+        [(ngModel)]="newEvent.description"
+        rows="3"
+        class="form-control form-control-sm"
+        placeholder="Enter description"
+      ></textarea>
     </div>
-  </ng-template>
+    <div class="form-group">
+      <label for="event-date" class="form-label mt-2">Date of event</label>
+      <mat-form-field>
+        <input
+          id="event-date"
+          matInput
+          [matDatepicker]="datepicker"
+          placeholder="Choose a date"
+          [(ngModel)]="newEvent.date"
+        />
+        <mat-datepicker-toggle
+          matIconSuffix
+          [for]="datepicker"
+        ></mat-datepicker-toggle>
+        <mat-datepicker #datepicker></mat-datepicker>
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-sm btn-secondary" (click)="closeModal()">
+      <i class="fa-regular fa-circle-xmark me-1"></i>Cancel
+    </button>
+    <button type="button" class="btn btn-sm btn-primary" (click)="createEvent()">
+      <i class="fa-regular fa-circle-check me-2"></i>Save
+    </button>
+  </div>
+</ng-template>

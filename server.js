@@ -5,7 +5,6 @@ require("dotenv").config();
 
 const express = require("express");
 const path = require("path");
-const bodyParser = require("body-parser");
 const passport = require("passport");
 const cors = require("cors");
 
@@ -61,17 +60,6 @@ const swaggerDocument = swaggerJsDoc({
         },
       },
       schemas: {
-        Codelist: {
-          type: "string",
-          description:
-            "Allowed values for the codelist used in events.",
-          enum: [
-            "name",
-            "description",
-            "date",
-            "signups",
-          ],
-        },
         ErrorMessage: {
           type: "object",
           properties: {
@@ -118,14 +106,36 @@ app.use(express.static(path.join(__dirname, "angular", "build")));
 app.use(passport.initialize());
 
 /**
- * Body parser (application/x-www-form-urlencoded)
+ * Body parsers (application/x-www-form-urlencoded and application/json)
  */
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
+
+/**
+ * Swagger file and explorer
+ */
+app.get("/api/swagger.json", (req, res) =>
+  res.status(200).json(swaggerDocument)
+);
+app.use(
+  "/api/docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocument, {
+    customCss: ".swagger-ui .topbar { display: none }",
+  })
+);
 
 /**
  * API routing
  */
 app.use("/api", apiRouter);
+
+/**
+ * Unknown API routes return JSON instead of the Angular app
+ */
+app.use("/api", (req, res) =>
+  res.status(404).json({ message: `Route '${req.originalUrl}' not found.` })
+);
 
 /**
  * Angular routing
@@ -135,25 +145,13 @@ app.get("*", (req, res) => {
 });
 
 /**
- * Swagger file and explorer
- */
-apiRouter.get("/swagger.json", (req, res) =>
-  res.status(200).json(swaggerDocument)
-);
-apiRouter.use(
-  "/docs",
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerDocument, {
-    customCss: ".swagger-ui .topbar { display: none }",
-  })
-);
-
-/**
- * Authorization error handler
+ * Error handler
  */
 app.use((err, req, res, next) => {
   if (err.name === "UnauthorizedError")
-    res.status(401).json({ message: err.message });
+    return res.status(401).json({ message: err.message });
+  console.error(err);
+  res.status(err.status || 500).json({ message: err.message });
 });
 
 /**

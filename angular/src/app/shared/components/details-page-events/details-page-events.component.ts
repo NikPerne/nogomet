@@ -36,11 +36,7 @@ export class DetailsPageEventsComponent implements OnInit {
       )
       .subscribe((event: Event) => {
         this.event = event;
-        this.header = {
-          title: event.name,
-          subtitle: "",
-          sidebar: `${event.name} is on our Demo app because it is a fascinating cultural heritage nearby. If you've visited and you like it - or if you don't - please review it to help other people just like you.`,
-        };
+        this.header = { title: event.name, subtitle: "", sidebar: "" };
       });
   }
 

@@ -5,7 +5,7 @@ import { tap } from "rxjs/operators";
 import { User } from "../classes/user";
 import { AuthResponse } from "../classes/auth-response";
 import { DemoDataService } from "./demo-data.service";
-import { Router } from '@angular/router';
+import { Router } from "@angular/router";
 
 @Injectable({
   providedIn: "root",
@@ -15,27 +15,23 @@ export class AuthenticationService {
     @Inject(BROWSER_STORAGE) private storage: Storage,
     private demoDataService: DemoDataService,
     private router: Router
-  ) { }
+  ) {}
 
   public login(user: User): Observable<AuthResponse> {
-    return this.demoDataService.login(user).pipe(
-      tap((authResponse: AuthResponse) => {
-        this.saveToken(authResponse.token);
-      })
-    );
+    return this.demoDataService
+      .login(user)
+      .pipe(tap((authResponse) => this.saveToken(authResponse.token)));
   }
 
   public register(user: User): Observable<AuthResponse> {
-    return this.demoDataService.register(user).pipe(
-      tap((authResponse: AuthResponse) => {
-        this.saveToken(authResponse.token);
-      })
-    );
+    return this.demoDataService
+      .register(user)
+      .pipe(tap((authResponse) => this.saveToken(authResponse.token)));
   }
 
   public logout(): void {
     this.storage.removeItem("demo-token");
-    this.router.navigate(['/login']);
+    this.router.navigate(["/login"]);
   }
 
   public getToken(): string | null {
@@ -46,34 +42,32 @@ export class AuthenticationService {
     this.storage.setItem("demo-token", token);
   }
 
-  private b64Utf8(input: string): string {
-    return decodeURIComponent(
-      Array.prototype.map
-        .call(window.atob(input), (character: string) => {
-          return "%" + ("00" + character.charCodeAt(0).toString(16)).slice(-2);
-        })
-        .join("")
-    );
-  }
-
   public isLoggedIn(): boolean {
-    const token: string | null = this.getToken();
-    if (token) {
-      const payload = JSON.parse(this.b64Utf8(token.split(".")[1]));
-      return payload.exp > Date.now() / 1000;
-    } else return false;
+    const payload = this.getPayload();
+    return !!payload && payload.exp > Date.now() / 1000;
   }
 
   public getCurrentUser(): User | null {
-    let user!: User;
-    if (this.isLoggedIn()) {
-      let token: string | null = this.getToken();
-      if (token) {
-        let { email, name, timesSignedUp, admin } = JSON.parse(this.b64Utf8(token.split(".")[1]));
-        user = { email, name, timesSignedUp, admin };
-      }
+    if (!this.isLoggedIn()) return null;
+    const { _id, email, name, timesSignedUp, admin } = this.getPayload();
+    return { _id, email, name, timesSignedUp, admin: !!admin };
+  }
+
+  /**
+   * Decodes the JWT payload, which is base64url-encoded UTF-8 JSON
+   */
+  private getPayload(): any | null {
+    const token = this.getToken();
+    if (!token) return null;
+    try {
+      const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+      const binary = window.atob(base64);
+      const bytes = Uint8Array.from(binary, (character) =>
+        character.charCodeAt(0)
+      );
+      return JSON.parse(new TextDecoder().decode(bytes));
+    } catch {
+      return null;
     }
-    return user;
   }
 }
-

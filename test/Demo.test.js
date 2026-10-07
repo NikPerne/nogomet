@@ -197,7 +197,7 @@ const { assert } = require("console");
         await browser.executeScript(
           "window.scrollBy(0,document.body.scrollHeight)"
         );
-        button = await browser.findElement(
+        let button = await browser.findElement(
           By.xpath("//button[contains(., 'Pridem')]")
         );
         await button.click();

@@ -1,41 +1,36 @@
 const express = require("express");
 const router = express.Router();
-const { expressjwt: jwt } = require("express-jwt");
-const auth = jwt({
-  secret: process.env.JWT_SECRET,
-  userProperty: "payload",
-  algorithms: ["HS256"],
-});
+const { auth, adminOnly } = require("../middleware/auth");
 const ctrlEvents = require("../controllers/events");
 const ctrlSignup = require("../controllers/signup");
 const ctrlUsers = require("../controllers/users");
 const ctrlAuthentication = require("../controllers/authentication");
 
 /**
- * users
+ * Users
  */
 router.get("/users", ctrlUsers.userList);
 
 /**
- * events
+ * Events
  */
-router.get("/events", ctrlEvents.eventsList);
-router.get("/events/:eventId", ctrlEvents.eventsReadOne);
+router
+  .route("/events")
+  .get(ctrlEvents.eventsList)
+  .post(adminOnly, ctrlEvents.createEvent);
+router
+  .route("/events/:eventId")
+  .get(ctrlEvents.eventsReadOne)
+  .put(adminOnly, ctrlEvents.updateEvent);
+
+/**
+ * Signups
+ */
 router.post("/events/:eventId/signups", auth, ctrlSignup.signupCreate);
 router
   .route("/events/:eventId/signups/:signupId")
-  .get(ctrlSignup.SignUpReadOne)
-  .delete(auth, ctrlSignup.signUpDeleteOne);
-router.post("/events", auth, ctrlEvents.createEvent);
-router.put('/events/:id', auth, async (req, res) => {
-  try {
-    const updatedEvent = await ctrlEvents.updateEvent(req.params.id, req.body);
-    res.json(updatedEvent);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
+  .get(ctrlSignup.signupReadOne)
+  .delete(auth, ctrlSignup.signupDeleteOne);
 
 /**
  * Authentication
