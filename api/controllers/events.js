@@ -2,14 +2,22 @@ const mongoose = require("mongoose");
 const Event = mongoose.model("Event");
 const { parseLimit, isValidId } = require("./helpers");
 
-const EDITABLE_FIELDS = ["name", "description", "date"];
+const User = mongoose.model("User");
 
-const pickEditableFields = (body) =>
-  Object.fromEntries(
+const EDITABLE_FIELDS = ["name", "description", "date", "maxPlayers"];
+
+/**
+ * Picks editable fields from the body; an empty maxPlayers removes the limit
+ */
+const pickEditableFields = (body) => {
+  const fields = Object.fromEntries(
     EDITABLE_FIELDS.filter((field) => body[field] !== undefined).map(
       (field) => [field, body[field]]
     )
   );
+  if (fields.maxPlayers === "") fields.maxPlayers = null;
+  return fields;
+};
 
 const eventNotFound = (res, eventId) =>
   res.status(404).json({ message: `Event with id '${eventId}' not found.` });
@@ -123,7 +131,7 @@ const createEvent = async (req, res) => {
  * @openapi
  * /events/{eventId}:
  *   put:
- *     summary: Update an event's name, description or date (administrators only)
+ *     summary: Update an event's name, description, date or maxPlayers (administrators only)
  *     tags: [Events]
  *     security:
  *      - jwt: []
@@ -171,9 +179,58 @@ const updateEvent = async (req, res) => {
   }
 };
 
+/**
+ * @openapi
+ * /events/{eventId}:
+ *   delete:
+ *     summary: Delete an event (administrators only)
+ *     description: Attending players' timesSignedUp is decreased, since the event did not count.
+ *     tags: [Events]
+ *     security:
+ *      - jwt: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         description: ID of the event to delete
+ *         schema:
+ *           type: string
+ *     responses:
+ *       '204':
+ *         description: Event deleted
+ *       '401':
+ *         description: Not authenticated
+ *       '403':
+ *         description: Not an administrator
+ *       '404':
+ *         description: Event not found
+ *       '500':
+ *         description: Internal server error
+ */
+const deleteEvent = async (req, res) => {
+  const { eventId } = req.params;
+  if (!isValidId(eventId)) return eventNotFound(res, eventId);
+  try {
+    const event = await Event.findByIdAndDelete(eventId).exec();
+    if (!event) return eventNotFound(res, eventId);
+    // Legacy signups without userId can't be attributed reliably, so they are skipped
+    const attendingUserIds = event.signedup
+      .filter((signup) => signup.attending && signup.userId)
+      .map((signup) => signup.userId);
+    if (attendingUserIds.length > 0)
+      await User.updateMany(
+        { _id: { $in: attendingUserIds }, timesSignedUp: { $gt: 0 } },
+        { $inc: { timesSignedUp: -1 } }
+      ).exec();
+    res.status(204).send();
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
   eventsList,
   eventsReadOne,
   createEvent,
   updateEvent,
+  deleteEvent,
 };

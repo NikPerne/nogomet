@@ -16,12 +16,63 @@
         </div>
       </div>
     </div>
-    <div *ngFor="let event of events" class="card-body">
+    <div
+      *ngFor="let event of upcomingEvents; first as first"
+      class="card-body d-flex justify-content-between align-items-center"
+    >
       <a
         [routerLink]="['/events', event._id]"
         class="link-primary text-decoration-none"
+        [ngClass]="{ 'fw-bold': first }"
         ><i class="fa-solid fa-regular fa-calendar-days me-2"></i
         >{{ event.date | date : "d. MMMM, yyyy" : "CEST" : "sl" }}</a
+      >
+      <span>
+        <span *ngIf="first" class="badge bg-success me-2">Naslednji</span>
+        <span
+          class="badge"
+          [ngClass]="
+            event.maxPlayers && attendingCount(event) >= event.maxPlayers
+              ? 'bg-danger'
+              : 'bg-secondary'
+          "
+          title="Število prijavljenih"
+          ><i class="fa-solid fa-user me-1"></i>{{ attendingCount(event)
+          }}<ng-container *ngIf="event.maxPlayers"
+            >/{{ event.maxPlayers }}</ng-container
+          ></span
+        >
+      </span>
+    </div>
+    <div *ngIf="upcomingEvents.length === 0" class="card-body text-secondary">
+      Ni prihajajočih dogodkov.
+    </div>
+  </div>
+  <div *ngIf="pastEvents.length > 0" class="card mt-4">
+    <div class="card-header bg-light">
+      <h5 class="mt-1 mb-1">
+        <i class="fa-solid fa-clock-rotate-left me-2"></i>Pretekli dogodki
+      </h5>
+    </div>
+    <div
+      *ngFor="let event of visiblePastEvents"
+      class="card-body d-flex justify-content-between align-items-center py-2"
+    >
+      <a
+        [routerLink]="['/events', event._id]"
+        class="link-secondary text-decoration-none"
+        ><i class="fa-regular fa-calendar-days me-2"></i
+        >{{ event.date | date : "d. MMMM, yyyy" : "CEST" : "sl" }}</a
+      >
+      <span class="badge bg-light text-dark" title="Število udeležencev"
+        ><i class="fa-solid fa-user me-1"></i>{{ attendingCount(event) }}</span
+      >
+    </div>
+    <div *ngIf="hiddenPastCount > 0" class="card-body py-2">
+      <a
+        class="link-primary show-pointer text-decoration-none"
+        (click)="showAllPast = true"
+        >Pokaži še {{ hiddenPastCount }}</a
       >
     </div>
   </div>
@@ -102,6 +153,20 @@
         ></mat-datepicker-toggle>
         <mat-datepicker #datepicker></mat-datepicker>
       </mat-form-field>
+    </div>
+    <div class="form-group">
+      <label for="event-max-players" class="form-label mt-2"
+        >Max players <small class="text-secondary">(optional)</small></label
+      >
+      <input
+        id="event-max-players"
+        type="number"
+        min="1"
+        step="1"
+        [(ngModel)]="newEvent.maxPlayers"
+        class="form-control form-control-sm"
+        placeholder="No limit"
+      />
     </div>
   </div>
   <div class="modal-footer">

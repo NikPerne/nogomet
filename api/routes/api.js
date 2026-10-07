@@ -21,7 +21,8 @@ router
 router
   .route("/events/:eventId")
   .get(ctrlEvents.eventsReadOne)
-  .put(adminOnly, ctrlEvents.updateEvent);
+  .put(adminOnly, ctrlEvents.updateEvent)
+  .delete(adminOnly, ctrlEvents.deleteEvent);
 
 /**
  * Signups
@@ -30,6 +31,7 @@ router.post("/events/:eventId/signups", auth, ctrlSignup.signupCreate);
 router
   .route("/events/:eventId/signups/:signupId")
   .get(ctrlSignup.signupReadOne)
+  .put(auth, ctrlSignup.signupUpdateOne)
   .delete(auth, ctrlSignup.signupDeleteOne);
 
 /**

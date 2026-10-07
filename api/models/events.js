@@ -59,6 +59,10 @@ const signupSchema = new mongoose.Schema({
  *      description: Date of the event.
  *      format: date-time
  *      example: 2023-01-15T18:00:00.000Z
+ *     maxPlayers:
+ *      type: integer
+ *      description: Maximum number of attending players (no limit if missing).
+ *      example: 12
  *     signedup:
  *      type: array
  *      description: List of users signed up for the event.
@@ -78,9 +82,27 @@ const eventSchema = new mongoose.Schema({
     required: [true, "Description is required!"],
   },
   date: { type: Date, default: Date.now },
+  maxPlayers: { type: Number, min: [1, "At least one player is required!"] },
   signedup: {
     type: [signupSchema],
   },
 });
+
+/**
+ * Events only have a date, so signups stay open until the end of the event's day
+ */
+const SIGNUP_GRACE_MS = 24 * 60 * 60 * 1000;
+
+eventSchema.methods.isPast = function () {
+  return !!this.date && this.date.getTime() + SIGNUP_GRACE_MS < Date.now();
+};
+
+eventSchema.methods.attendingCount = function () {
+  return this.signedup.filter((signup) => signup.attending).length;
+};
+
+eventSchema.methods.isFull = function () {
+  return !!this.maxPlayers && this.attendingCount() >= this.maxPlayers;
+};
 
 mongoose.model("Event", eventSchema, "Events");

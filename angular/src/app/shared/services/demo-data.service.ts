@@ -58,12 +58,32 @@ export class DemoDataService {
 
   public createEvent(event: Event): Observable<Event> {
     const url: string = `${this.apiUrl}/events`;
-    const body = new HttpParams()
+    let body = new HttpParams()
       .set("name", event.name)
       .set("description", event.description)
       .set("date", new Date(event.date).toISOString());
+    if (event.maxPlayers) body = body.set("maxPlayers", event.maxPlayers);
     return this.http
       .post<Event>(url, body, { headers: this.headers(true) })
+      .pipe(catchError(this.handleError));
+  }
+
+  public deleteEvent(eventId: string): Observable<unknown> {
+    const url: string = `${this.apiUrl}/events/${eventId}`;
+    return this.http
+      .delete(url, { headers: this.headers(true) })
+      .pipe(catchError(this.handleError));
+  }
+
+  public updateSignup(
+    eventId: string,
+    signupId: string,
+    attending: boolean
+  ): Observable<Signup> {
+    const url: string = `${this.apiUrl}/events/${eventId}/signups/${signupId}`;
+    const body = new HttpParams().set("attending", attending);
+    return this.http
+      .put<Signup>(url, body, { headers: this.headers(true) })
       .pipe(catchError(this.handleError));
   }
 
