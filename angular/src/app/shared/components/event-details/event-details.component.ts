@@ -7,6 +7,7 @@ import {
   Output,
   SimpleChanges,
   TemplateRef,
+  ChangeDetectionStrategy
 } from "@angular/core";
 import { formatDate } from "@angular/common";
 import { Router } from "@angular/router";
@@ -35,9 +36,11 @@ const GUEST_NAME_MAX_LENGTH = 40;
 const MAX_PLAYERS_LOADED = 1000;
 
 @Component({
-  selector: "app-event-details",
-  templateUrl: "event-details.component.html",
-  styles: [],
+    selector: "app-event-details",
+    templateUrl: "event-details.component.html",
+    styles: [],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class EventDetailsComponent implements OnInit, OnChanges {
   constructor(
@@ -60,8 +63,8 @@ export class EventDetailsComponent implements OnInit, OnChanges {
   protected guestName = "";
   protected readonly noteMaxLength = NOTE_MAX_LENGTH;
   protected readonly guestNameMaxLength = GUEST_NAME_MAX_LENGTH;
-  /** All players with statistics, used for "who hasn't replied yet" */
-  private players: PlayerStats[] = [];
+  /** All players with statistics: "who hasn't replied yet" and team balancing */
+  protected players: PlayerStats[] = [];
   private modalRef?: BsModalRef;
 
   ngOnInit(): void {

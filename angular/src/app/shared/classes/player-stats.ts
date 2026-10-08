@@ -10,4 +10,6 @@ export class PlayerStats {
   wins!: number;
   draws!: number;
   losses!: number;
+  /** Matches where the player got the most player-of-the-match votes */
+  mvpAwards!: number;
 }

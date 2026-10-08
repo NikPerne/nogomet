@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Event = mongoose.model("Event");
 const { parseLimit, isValidId } = require("./helpers");
+const { notifyCancellation } = require("../services/notifications");
 
 const EDITABLE_FIELDS = [
   "name",
@@ -140,7 +141,10 @@ const createEvent = async (req, res) => {
  * /events/{eventId}:
  *   put:
  *     summary: Update an event (administrators only)
- *     description: Accepts name, description, date, maxPlayers, cancelled and cancelReason. Send cancelled=true to cancel and cancelled=false to restore.
+ *     description: >
+ *       Accepts name, description, date, maxPlayers, cancelled and cancelReason. Send
+ *       cancelled=true to cancel and cancelled=false to restore. Cancelling an upcoming event
+ *       emails everyone who said "Pridem" (unless they turned notifications off).
  *     tags: [Events]
  *     security:
  *      - jwt: []
@@ -174,13 +178,17 @@ const updateEvent = async (req, res) => {
   const { eventId } = req.params;
   if (!isValidId(eventId)) return eventNotFound(res, eventId);
   try {
-    const event = await Event.findByIdAndUpdate(
-      eventId,
-      pickEditableFields(req.body),
-      { new: true, runValidators: true }
-    ).exec();
-    if (!event) eventNotFound(res, eventId);
-    else res.status(200).json(event);
+    const event = await Event.findById(eventId).exec();
+    if (!event) return eventNotFound(res, eventId);
+    const wasCancelled = !!event.cancelled;
+    event.set(pickEditableFields(req.body));
+    await event.save();
+    res.status(200).json(event);
+    // Players who said "Pridem" are told by email; sent after responding, so the admin doesn't wait
+    if (!wasCancelled && event.cancelled && event.date > new Date())
+      notifyCancellation(event).catch((err) =>
+        console.error("Cancellation emails failed:", err.message)
+      );
   } catch (err) {
     if (err.name === "ValidationError" || err.name === "CastError")
       res.status(400).json({ message: err.message });

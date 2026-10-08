@@ -138,6 +138,30 @@ const scoreSchema = new mongoose.Schema(
 );
 
 /**
+ * Identifies a player across signups, teams and votes: the userId, or for players
+ * without one "guest:<name>" / "name:<name>" (legacy). The frontend uses the same keys.
+ */
+const playerKeyOf = (player) =>
+  player.userId
+    ? player.userId.toString()
+    : `${player.guest || player.guestOf ? "guest" : "name"}:${player.name}`;
+
+/**
+ * Player of the match vote. Votes are secret: the event's JSON only contains the tally.
+ */
+const mvpVoteSchema = new mongoose.Schema(
+  {
+    voterId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    playerKey: { type: String, required: true },
+    playerName: { type: String, required: true },
+  },
+  { _id: false }
+);
+
+/** Voting opens at kick-off and stays open for a week */
+const MVP_VOTING_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
  * @openapi
  * components:
  *  schemas:
@@ -204,6 +228,23 @@ const eventSchema = new mongoose.Schema({
   },
   teams: { type: teamsSchema },
   score: { type: scoreSchema },
+  // Set when the "haven't answered yet" reminder emails were sent, so they go out once
+  remindersSentAt: { type: Date },
+  mvpVotes: { type: [mvpVoteSchema], default: undefined },
+});
+
+/**
+ * JSON for API responses: secret votes are replaced by a tally (most votes first)
+ */
+eventSchema.set("toJSON", {
+  transform: (doc, json) => {
+    if (json.mvpVotes) {
+      json.mvpTally = doc.mvpTally();
+      delete json.mvpVotes;
+    }
+    delete json.remindersSentAt;
+    return json;
+  },
 });
 
 /**
@@ -277,6 +318,33 @@ eventSchema.methods.resultFor = function (user) {
   return diff > 0 ? "win" : diff < 0 ? "loss" : "draw";
 };
 
+eventSchema.methods.isMvpVotingOpen = function () {
+  const start = this.date?.getTime() ?? Infinity;
+  return !this.cancelled && Date.now() >= start && Date.now() < start + MVP_VOTING_MS;
+};
+
+/**
+ * [{ key, name, votes }], most votes first
+ */
+eventSchema.methods.mvpTally = function () {
+  const tally = new Map();
+  for (const vote of this.mvpVotes ?? []) {
+    const entry = tally.get(vote.playerKey) ?? { key: vote.playerKey, name: vote.playerName, votes: 0 };
+    entry.votes++;
+    tally.set(vote.playerKey, entry);
+  }
+  return [...tally.values()].sort((a, b) => b.votes - a.votes || a.name.localeCompare(b.name));
+};
+
+/**
+ * Keys of the player(s) with the most votes (ties all win), or [] without votes
+ */
+eventSchema.methods.mvpWinnerKeys = function () {
+  const tally = this.mvpTally();
+  const top = tally[0]?.votes ?? 0;
+  return top > 0 ? tally.filter((entry) => entry.votes === top).map((entry) => entry.key) : [];
+};
+
 mongoose.model("Event", eventSchema, "Events");
 
-module.exports = { TEAM_KEYS };
+module.exports = { TEAM_KEYS, playerKeyOf };

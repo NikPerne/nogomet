@@ -1,7 +1,7 @@
 const passport = require("passport");
 const mongoose = require("mongoose");
 const User = mongoose.model("User");
-const { sendMail, appUrl } = require("../config/mail");
+const { sendMail, appUrl, escapeHtml } = require("../config/mail");
 
 /**
  * @openapi
@@ -200,9 +200,6 @@ const changePassword = async (req, res) => {
 
 /** A new reset email is sent at most once per minute per account */
 const RESET_RESEND_INTERVAL_MS = 60 * 1000;
-
-const escapeHtml = (text) =>
-  text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 const sendResetEmail = (user, link) =>
   sendMail({

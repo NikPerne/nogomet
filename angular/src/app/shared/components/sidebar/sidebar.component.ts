@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from "@angular/core";
+import { Component, Input, OnInit, ChangeDetectionStrategy } from "@angular/core";
 import {
   ApexAxisChartSeries,
   ApexChart,
@@ -17,8 +17,8 @@ export type ChartOptions = {
 };
 
 @Component({
-  selector: "app-sidebar",
-  template: `<apx-chart [series]="chartOptions.series" [chart]="chartOptions.chart"[dataLabels]="chartOptions.dataLabels" [plotOptions]="chartOptions.plotOptions"[xaxis]="chartOptions.xaxis"></apx-chart><br><br><div class="ratio ratio-4x3">
+    selector: "app-sidebar",
+    template: `<apx-chart [series]="chartOptions.series" [chart]="chartOptions.chart"[dataLabels]="chartOptions.dataLabels" [plotOptions]="chartOptions.plotOptions"[xaxis]="chartOptions.xaxis"></apx-chart><br><br><div class="ratio ratio-4x3">
   <div>
   <h4 class="mt-1 mb-1">
   <a
@@ -40,7 +40,9 @@ export type ChartOptions = {
     class="rounded-3"
   ></iframe>
 </div>`,
-  styles: [],
+    styles: [],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class SidebarComponent implements OnInit {
   @Input() content: string = "";

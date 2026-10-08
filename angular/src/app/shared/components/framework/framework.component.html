@@ -31,6 +31,13 @@
             ><i class="fa-solid fa-euro-sign me-1"></i>Članarina</a
           >
         </li>
+        @if (isAdmin()) {
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/uporabniki" routerLinkActive="active"
+              ><i class="fa-solid fa-users-gear me-1"></i>Uporabniki</a
+            >
+          </li>
+        }
         <li class="nav-item dropdown">
           <a
             class="nav-link dropdown-toggle"
@@ -42,11 +49,7 @@
             Information
           </a>
           <div class="dropdown-menu">
-            <a
-              class="dropdown-item"
-              target="_blank"
-              href="https://github.com/NikPerne/nogomet"
-            >
+            <a class="dropdown-item" target="_blank" href="https://github.com/NikPerne/nogomet">
               Izvorna koda aplikacije
             </a>
             <div class="dropdown-divider"></div>
@@ -55,9 +58,11 @@
         </li>
       </ul>
       <ul class="navbar-nav justify-content-end">
-        <li class="nav-item p-2" *ngIf="!isConnected()">
-          <i class="fa-solid fa-triangle-exclamation text-light"></i>
-        </li>
+        @if (!isConnected()) {
+          <li class="nav-item p-2">
+            <i class="fa-solid fa-triangle-exclamation text-light"></i>
+          </li>
+        }
         <li class="nav-item dropdown">
           <a
             class="nav-link dropdown-toggle"
@@ -69,30 +74,21 @@
               class="fa-solid me-1"
               [ngClass]="{
                 'fa-user-ninja': !isLoggedIn(),
-                'fa-user-shield': isLoggedIn()
+                'fa-user-shield': isLoggedIn(),
               }"
             ></i
             >{{ getCurrentUser() }}
           </a>
           <div class="dropdown-menu dropdown-menu-end">
-            <a
-              routerLink="login"
-              *ngIf="!isLoggedIn()"
-              class="dropdown-item show-pointer"
-              >Login</a
-            >
-            <a
-              *ngIf="isLoggedIn()"
-              routerLink="/profil"
-              class="dropdown-item show-pointer"
-              >Moj profil</a
-            >
-            <a
-              *ngIf="isLoggedIn()"
-              (click)="logout()"
-              class="dropdown-item show-pointer"
-              >Logout</a
-            >
+            @if (!isLoggedIn()) {
+              <a routerLink="login" class="dropdown-item show-pointer">Login</a>
+            }
+            @if (isLoggedIn()) {
+              <a routerLink="/profil" class="dropdown-item show-pointer">Moj profil</a>
+            }
+            @if (isLoggedIn()) {
+              <a (click)="logout()" class="dropdown-item show-pointer">Logout</a>
+            }
           </div>
         </li>
       </ul>

@@ -1,8 +1,8 @@
-import { Component } from "@angular/core";
+import { Component, ChangeDetectionStrategy } from "@angular/core";
 
 @Component({
-  selector: "app-homepage",
-  template: `<app-header [content]="header"></app-header>
+    selector: "app-homepage",
+    template: `<app-header [content]="header"></app-header>
     <div class="row">
       <div class="col-12 col-md-4">
         <app-event-list></app-event-list>
@@ -12,7 +12,9 @@ import { Component } from "@angular/core";
         [content]="header.sidebar"
       ></app-sidebar>
     </div>`,
-  styles: [],
+    styles: [],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 
 export class HomepageComponent{

@@ -5,17 +5,26 @@ Nogomet is a small app for signing up to recreational football ("torkova rekreac
 ## Stack and layout
 
 - **Backend**: Node + Express 4 + Mongoose 7, JWT auth (`express-jwt`, `jsonwebtoken`), Passport local strategy for login. Entry point: `server.js`.
-- **Frontend**: Angular 16 (NgModule-based, not standalone) in `angular/`, Bootstrap 5 (Sandstone theme, loaded from `src/assets` in `index.html`), ngx-bootstrap modals, ng-apexcharts.
-  - Date and time inputs are native `<input type="date">` / `<input type="time">`. Angular Material is still in `package.json` but no longer imported. Its theme CSS was never loaded, which is why the old Material datepicker rendered broken, so don't reintroduce Material components without adding a theme.
-- `server.js` serves the built Angular app from `angular/build/` and the API under `/api`. `angular/build` is **not committed** (it's in `.gitignore`). Render builds it with the build command `npm run build`, and `build-prod` installs dev dependencies with `--include=dev` because `NODE_ENV=production` is set there.
+- **Frontend**: Angular 22 in `angular/`, still **NgModule-based** (`app.module.ts`; every component has `standalone: false`).
+  - Libraries: Bootstrap 5 (Sandstone theme), ngx-bootstrap 22 modals, ng-apexcharts 3 with apexcharts 7.
+  - Templates use the built-in control flow (`@if`, `@for`).
+  - Components use `ChangeDetectionStrategy.Eager`, added by the v22 migration to keep the pre-22 behaviour. A few templates and components rely on that: getters such as `isLoggedIn()` and objects that are mutated.
+  - Stylesheets (Font Awesome, Bootstrap Sandstone, `src/assets/styles/style.css`, `src/styles.css`) are bundled through the `styles` array in `angular.json`, not linked in `index.html`.
+  - Date and time inputs are native `<input type="date">` / `<input type="time">`. There is no Angular Material; its theme CSS was never loaded, which is why the old Material datepicker rendered broken.
+- Build: the `@angular/build:application` builder writes **directly to `angular/build/`** (`outputPath: { base: "build", browser: "" }`, not `build/browser`). `server.js` serves the built app from there and the API under `/api`.
+  - `angular/build` is **not committed** (it's in `.gitignore`).
+  - Render builds it with the build command `npm run build`. `build-prod` installs dev dependencies with `--include=dev`, because `NODE_ENV=production` is set there.
+- **Node**: `^22.22.3 || >=24.15.0` (Angular 22's requirement; see `engines`). On Render this is set by the `NODE_VERSION` environment variable.
 
 ```
 server.js                  Express app, Swagger setup, static Angular, error handler
 api/routes/api.js          All REST routes
 api/middleware/auth.js     `auth` (JWT + loads req.user from DB) and `adminOnly`
-api/controllers/           events.js, signup.js, users.js, season.js, authentication.js, helpers.js
+api/controllers/           events.js, signup.js, users.js (stats), season.js, teams.js, mvp.js,
+                           authentication.js, account.js (/me), admin.js, cron.js, helpers.js
+api/services/              notifications.js (cancellation and reminder emails)
 api/models/                db.js (connection), events.js (Event + embedded Signup), users.js, payments.js
-api/config/                passport.js (local strategy), season.js (season dates and fee)
+api/config/                passport.js (local strategy), season.js (season dates and fee), mail.js (Brevo)
 angular/src/app/shared/    components/, services/, classes/, pipes/
 data/                      Seed JSON (events, test users)
 test/Demo.test.js          Selenium + mocha end-to-end tests (expects Docker setup)
@@ -26,9 +35,10 @@ test/Demo.test.js          Selenium + mocha end-to-end tests (expects Docker set
 - `npm start`: start the API and serve the built frontend (port `PORT` or 3000).
 - `npm run build`: install root deps, then install and build the Angular app for production into `angular/build`.
 - `cd angular && npm start`: Angular dev server (`ng serve`) talking to `environment.apiUrl` (`https://localhost:3000/api` in dev).
-- `cd angular && npx ng build --configuration production --output-path <tmp>`: quickest full type check (`strictTemplates` is on).
+- `cd angular && npx ng build --configuration production`: quickest full type check (`strictTemplates` is on).
+  - On a machine with little free virtual memory (Windows page file), the build can crash with "Zone Allocation failed" or "Not enough space". In that case, set `NG_BUILD_MAX_WORKERS=1` and `NG_BUILD_PARALLEL_TS=0` first.
+  - With an older local Node, run the CLI through a temporary Node: `npx -p node@22 -- node node_modules/@angular/cli/bin/ng.js build`.
 - `npm test`: Selenium E2E tests. Needs the app running at `https://host.docker.internal:3000`, a Selenium server on `localhost:4445`, and the `web-dev-mongo-db` container (see `docker-compose.yml`). They target 2023 events that are now past, so the signup steps need updated test data.
-- Node 18 on Render. Angular 16 only supports Node 16 and 18, so upgrade Angular before upgrading Node.
 
 ## Environment (.env, not committed)
 
@@ -37,12 +47,14 @@ test/Demo.test.js          Selenium + mocha end-to-end tests (expects Docker set
 - `SEASON_FEE_EUR`: season membership fee, default 80.
 - `APP_URL`: public base URL used in emailed links, e.g. `https://nogomet.onrender.com`. **Required in production**, and never derived from the request's Host header.
 - `BREVO_API_KEY`, `MAIL_FROM` (a sender verified in Brevo), optional `MAIL_FROM_NAME`: email via the Brevo HTTP API (`api/config/mail.js`). Without them, emails are printed to the console outside production; in production the send fails and is only logged.
+- `CRON_SECRET`: shared secret for `POST /api/cron/reminders`, called by an external scheduler with `Authorization: Bearer <CRON_SECRET>`. Without it, the endpoint answers 503.
+- `REMINDER_HOURS_BEFORE`: reminders cover events starting within this many hours (default 30). A daily run at ~18:00 reminds the evening before.
 - `HTTPS=true`: serve over HTTPS using `/etc/secrets/server.key` and `/etc/secrets/server.cert`.
 - `PORT`: defaults to 3000.
 
 ## Domain model
 
-- **User** (`Users` collection): `email` (unique), `name`, `hash`/`salt` (pbkdf2), `admin`, plus `resetTokenHash`/`resetTokenExpires`/`resetRequestedAt` for password reset. Only a SHA-256 hash of the emailed token is stored; it is valid 1 hour and works once. Never expose these fields. The JWT payload contains `_id`, `email`, `name`, `admin`, `exp` (7 days). The frontend treats tokens without an `admin` claim as logged out. Old documents may still have an unused `timesSignedUp` field.
+- **User** (`Users` collection): `email` (unique), `name`, `hash`/`salt` (pbkdf2), `admin`, plus `resetTokenHash`/`resetTokenExpires`/`resetRequestedAt` for password reset. Only a SHA-256 hash of the emailed token is stored; it is valid 1 hour and works once. Never expose these fields. `emailNotifications` (default true) is the opt-out for reminder and cancellation emails; password-reset emails are always sent. The JWT payload contains `_id`, `email`, `name`, `admin`, `exp` (7 days). The frontend treats tokens without an `admin` claim as logged out. Old documents may still have an unused `timesSignedUp` field.
 - **Event** (`Events` collection): `name`, `description`, `date` (date and start time; older events are at midnight with no time), optional `maxPlayers`, `cancelled` + `cancelReason`, `signedup: [Signup]`.
   - Model methods: `isPast()` (signups stay open until 24 h after `date`), `signupsClosedReason()` (past or cancelled), `attendingInOrder()`, `confirmedSignups()`, `waitlistedSignups()`, `isFull()`.
   - The frontend mirrors these in `angular/src/app/shared/classes/event.ts`, so keep the two in sync.
@@ -55,6 +67,12 @@ test/Demo.test.js          Selenium + mocha end-to-end tests (expects Docker set
   - `TeamPlayer` is `{ name, userId?, guest? }`. Players match users by `userId`, or by name for legacy players; guests never match.
   - Model methods: `teamOf(user)` and `resultFor(user)` (`win`/`draw`/`loss`).
   - Saved teams are a snapshot. When signups change afterwards, the UI warns admins but doesn't update the teams.
+- **Player keys** (`playerKeyOf` in `api/models/events.js`, `playerKey` in `classes/event.ts`) identify a player across signups, teams and votes: the `userId`, otherwise `guest:<name>` or `name:<name>` (legacy).
+- **Player of the match** (on Event): `mvpVotes: [{ voterId, playerKey, playerName }]`.
+  - Voting is open from kick-off for 7 days (`isMvpVotingOpen()`). Only confirmed players can vote, not for themselves, with one vote each; a new vote replaces the old one.
+  - Votes are **secret**: the Event `toJSON` transform replaces `mvpVotes` with `mvpTally: [{ key, name, votes }]` and also strips `remindersSentAt`.
+  - `mvpWinnerKeys()` returns the top-voted keys; ties all count.
+- `remindersSentAt` (on Event) is set when the reminder emails went out, so each event is reminded about once.
 - **Season** (`api/config/season.js`): 1 October – 30 April. Dates in May–September belong to the *upcoming* season. Labels look like `2026/27`.
 - **SeasonPayment** (`SeasonPayments` collection): `{ season, userId, paidOn }`, unique per season and user. A document exists only when the fee is paid; marking a player unpaid deletes it. Fees are per season, not per match.
 
@@ -66,6 +84,15 @@ test/Demo.test.js          Selenium + mocha end-to-end tests (expects Docker set
   - `attendanceRate`: `gamesPlayed` divided by the events since the user's first signup of any kind (0–1).
   - `currentStreak`: consecutive most recent events the user played.
   - `wins`/`draws`/`losses`: from events with saved teams and a score.
+  - `mvpAwards`: events where the user had the most player-of-the-match votes.
+  - `?season=2026/27` limits everything to that season's events. Without it the stats are all-time.
+- Player of the match: `GET /api/events/:id/mvp` (logged in) returns `{ canVote, votingOpen, myVote }`. `PUT` with `playerKey` votes and returns `{ event, ...status }`.
+- Notifications (`api/services/notifications.js`; dates are formatted in `Europe/Ljubljana` time):
+  - Cancelling an upcoming event via `PUT /api/events/:id` emails users who said "Pridem". This happens after the response is sent.
+  - `POST /api/cron/reminders` (requires `CRON_SECRET`) emails regulars (users who played at least one past game) without an own signup for events within `REMINDER_HOURS_BEFORE`.
+  - Both respect `emailNotifications`.
+- Account: `GET /api/me` returns `{ _id, name, email, admin, emailNotifications }`. `PUT /api/me/settings` takes `emailNotifications`.
+- Admin: `GET /api/admin/users` lists all users. `PUT /api/admin/users/:id` takes `admin`. `DELETE /api/admin/users/:id` also deletes the user's season payments; their signups stay but no longer count. Admins can't remove their own admin rights or delete themselves.
 - Teams (admin): `PUT /api/events/:id/teams` takes a **JSON** body `{ rumeni: [...], rdeci: [...] }`; `DELETE` removes the teams and the score. `PUT /api/events/:id/score` takes form-encoded `rumeni` and `rdeci` (409 without saved teams); `DELETE` removes the score.
 - Passwords:
   - `PUT /api/me/password` (logged in) takes `currentPassword` and `newPassword`.
@@ -95,13 +122,15 @@ test/Demo.test.js          Selenium + mocha end-to-end tests (expects Docker set
   - an optional signup note input,
   - "Dodaj gosta" (add guest),
   - the teams card, `EventTeamsComponent` (`app-event-teams`). Anyone can shuffle a local preview of confirmed players (non-admins only while nothing is saved). Admins "Shrani za vse", enter the score, or remove both. It has its own "Deli ekipe" button.
+    - The split is **balanced**. Each player's rating is `(wins + ½·draws + 1) / (games + 2)`, so guests and new players get 0.5. Players go strongest first, each into the weaker team that has room, with a small random jitter so reshuffles differ.
+  - the player-of-the-match card, `EventMvpComponent` (`app-event-mvp`).
   - "Še niso odgovorili": regulars (`gamesPlayed > 0` in `GET /api/users`) without an own signup on an open event, with an "Opomni" reminder share,
   - "Deli", which uses `navigator.share` and falls back to the clipboard,
   - "Koledar", which downloads an `.ics` file built in `shared/classes/calendar.ts`. Events without a time become all-day events, and timed ones last 90 minutes.
 - Sharing goes through `ShareService` (`navigator.share`, falling back to the clipboard).
 - `EventDetailsComponent.setSignups` replaces the whole `event` object, so child components' `ngOnChanges` fire. Don't mutate `event.signedup` in place.
-- Pages: `/lestvica` (`LeaderboardComponent`, all stats from `GET /api/users`), `/profil` (own stats, season status, change password; linked from the user menu), `/pozabljeno-geslo` and `/ponastavi-geslo?token=` (public; the latter path must match the link built in `api/controllers/authentication.js`), and `/clanarina` (`SeasonComponent`). On `/clanarina` admins tick payments with checkboxes, and you can browse seasons with the arrows. The sidebar chart shows `gamesPlayed`.
-- Routes `''`, `events`, `events/:eventId`, `lestvica`, `clanarina` and `profil` are protected by `AuthGuard`. Unknown routes redirect to `''`.
+- Pages: `/lestvica` (`LeaderboardComponent`, all stats from `GET /api/users`, with a season picker), `/profil` (own stats, season status, email notification switch, change password; linked from the user menu), `/uporabniki` (`AdminUsersComponent`, admin user management; the menu link is shown to admins only), `/pozabljeno-geslo` and `/ponastavi-geslo?token=` (public; the latter path must match the link built in `api/controllers/authentication.js`), and `/clanarina` (`SeasonComponent`). On `/clanarina` admins tick payments with checkboxes, and you can browse seasons with the arrows. The sidebar chart shows `gamesPlayed`.
+- Routes `''`, `events`, `events/:eventId`, `lestvica`, `clanarina`, `profil` and `uporabniki` are protected by `AuthGuard`. Unknown routes redirect to `''`.
 - The Angular service worker (`ngsw-config.json`) is enabled in production. Its `navigationUrls` exclude `/api` and `/api/**`. Without that, the service worker answers navigations to `/api/docs` (Swagger) with the cached Angular app. Keep the exclusion when adding server-rendered pages. Users get a new frontend version after reloading twice.
 
 ## Conventions

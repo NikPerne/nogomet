@@ -52,4 +52,7 @@ const sendMail = async ({ to, toName, subject, text, html }) => {
     throw new Error(`Sending email failed: ${response.status} ${await response.text()}`);
 };
 
-module.exports = { sendMail, appUrl };
+const escapeHtml = (text) =>
+  String(text).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
+module.exports = { sendMail, appUrl, escapeHtml };

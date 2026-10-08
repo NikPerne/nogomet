@@ -5,6 +5,7 @@ import {
   OnChanges,
   Output,
   SimpleChanges,
+  ChangeDetectionStrategy
 } from "@angular/core";
 import { formatDate } from "@angular/common";
 import { DEFAULT_EVENT_TIME, Event, hasTimeOfDay } from "../../classes/event";
@@ -14,9 +15,11 @@ import { DEFAULT_EVENT_TIME, Event, hasTimeOfDay } from "../../classes/event";
  * Emits the edited fields on save; the parent does the API call and passes back errors.
  */
 @Component({
-  selector: "app-event-form",
-  templateUrl: "event-form.component.html",
-  styles: [],
+    selector: "app-event-form",
+    templateUrl: "event-form.component.html",
+    styles: [],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class EventFormComponent implements OnChanges {
   @Input() title = "";

@@ -1,25 +1,28 @@
-import { Component } from "@angular/core";
+import { Component, ChangeDetectionStrategy } from "@angular/core";
 import { DemoDataService } from "../../services/demo-data.service";
 import { ConnectionService } from "../../services/connection.service";
 
 const EMAIL_PATTERN = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,})+$/;
 
 @Component({
-  selector: "app-forgot-password",
-  template: `<app-header [content]="header"></app-header>
+    selector: "app-forgot-password",
+    template: `<app-header [content]="header"></app-header>
     <div class="row">
       <div class="col-12 col-md-6 col-lg-4">
-        <div *ngIf="sent; else requestForm" class="alert alert-success p-2 mt-3">
-          <i class="fa-solid fa-envelope-circle-check pe-2"></i>Če račun s tem e-naslovom
-          obstaja, smo ti poslali povezavo za ponastavitev gesla. Povezava velja 1 uro.
-          Preveri tudi mapo z neželeno pošto.
-        </div>
-        <ng-template #requestForm>
+        @if (sent) {
+          <div class="alert alert-success p-2 mt-3">
+            <i class="fa-solid fa-envelope-circle-check pe-2"></i>Če račun s tem e-naslovom
+            obstaja, smo ti poslali povezavo za ponastavitev gesla. Povezava velja 1 uro.
+            Preveri tudi mapo z neželeno pošto.
+          </div>
+        } @else {
           <p>Vnesi e-naslov svojega računa in poslali ti bomo povezavo za novo geslo.</p>
           <form (ngSubmit)="submit()" autocomplete="on">
-            <div *ngIf="formError" class="alert alert-dark p-2" role="alert">
-              <i class="fas fa-exclamation-triangle pe-2"></i>{{ formError }}
-            </div>
+            @if (formError) {
+              <div class="alert alert-dark p-2" role="alert">
+                <i class="fas fa-exclamation-triangle pe-2"></i>{{ formError }}
+              </div>
+            }
             <label for="email" class="form-label mb-1">E-mail address</label>
             <input
               type="email"
@@ -28,22 +31,24 @@ const EMAIL_PATTERN = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,})+$/;
               name="email"
               placeholder="Enter e-mail address"
               [(ngModel)]="email"
-            />
+              />
             <button
               type="submit"
               class="btn btn-sm btn-primary mt-3"
               [disabled]="sending || !isConnected()"
-            >
+              >
               <i class="fa-regular fa-paper-plane pe-2"></i>Pošlji povezavo
             </button>
           </form>
-        </ng-template>
+        }
         <p class="mt-3">
           <a routerLink="/login" class="link-primary">Nazaj na prijavo</a>
         </p>
       </div>
     </div>`,
-  styles: [],
+    styles: [],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class ForgotPasswordComponent {
   constructor(

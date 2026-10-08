@@ -5,6 +5,7 @@ import {
   OnChanges,
   Output,
   SimpleChanges,
+  ChangeDetectionStrategy
 } from "@angular/core";
 import { formatDate } from "@angular/common";
 import { DemoDataService } from "../../services/demo-data.service";
@@ -20,14 +21,13 @@ import {
   Teams,
   confirmedSignups,
   hasTimeOfDay,
+  playerKey,
 } from "../../classes/event";
 import { Signup } from "../../classes/signup";
+import { PlayerStats } from "../../classes/player-stats";
 
-/**
- * Identifies a player across signups and saved teams (guests and legacy players by name)
- */
-const playerKey = (player: { userId?: string; name: string; guest?: boolean }) =>
-  player.userId ?? `${player.guest ? "guest" : "name"}:${player.name}`;
+/** Random jitter added to ratings, so "Premešaj" gives different but still balanced teams */
+const RATING_JITTER = 0.1;
 
 const toTeamPlayer = (signup: Signup): TeamPlayer => ({
   name: signup.name,
@@ -40,10 +40,10 @@ const toTeamPlayer = (signup: Signup): TeamPlayer => ({
  * admins save it so everyone sees the same line-up, and enter the final score.
  */
 @Component({
-  selector: "app-event-teams",
-  templateUrl: "event-teams.component.html",
-  styles: [
-    `
+    selector: "app-event-teams",
+    templateUrl: "event-teams.component.html",
+    styles: [
+        `
       .team-dot {
         display: inline-block;
         width: 0.8rem;
@@ -56,7 +56,9 @@ const toTeamPlayer = (signup: Signup): TeamPlayer => ({
         font-weight: bold;
       }
     `,
-  ],
+    ],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class EventTeamsComponent implements OnChanges {
   constructor(
@@ -67,6 +69,8 @@ export class EventTeamsComponent implements OnChanges {
   ) {}
 
   @Input() event!: Event;
+  /** All-time player statistics, used to balance the teams */
+  @Input() players: PlayerStats[] = [];
   /** Emits the event after teams or score are saved or removed */
   @Output() eventChange = new EventEmitter<Event>();
 
@@ -124,17 +128,61 @@ export class EventTeamsComponent implements OnChanges {
   }
 
   /**
-   * Randomly splits confirmed players (not the waitlist) into two teams of (almost) equal size
+   * Player strength 0..1 from match results: (wins + ½·draws + 1) / (games + 2).
+   * The +1/+2 pulls players with few results towards 0.5; guests and new players are 0.5.
+   */
+  protected rating(player: TeamPlayer): number {
+    const stats = player.guest
+      ? undefined
+      : this.players.find((p) =>
+          player.userId ? p._id === player.userId : p.name === player.name
+        );
+    if (!stats) return 0.5;
+    const games = stats.wins + stats.draws + stats.losses;
+    return (stats.wins + stats.draws / 2 + 1) / (games + 2);
+  }
+
+  /**
+   * Whether anyone in the match has results, i.e. balancing makes a difference
+   */
+  protected get hasRatings(): boolean {
+    return this.confirmed.some((signup) => this.rating(toTeamPlayer(signup)) !== 0.5);
+  }
+
+  /**
+   * Average rating of a team as a percentage, e.g. 54
+   */
+  protected strength(players: TeamPlayer[]): number {
+    if (players.length === 0) return 0;
+    const total = players.reduce((sum, player) => sum + this.rating(player), 0);
+    return Math.round((total / players.length) * 100);
+  }
+
+  /**
+   * Splits confirmed players (not the waitlist) into two teams of (almost) equal size and
+   * strength: strongest first, each player joins the currently weaker team that has room.
+   * Small random jitter keeps reshuffles varied; without results it's a random split.
    */
   protected shuffle(): void {
     this.clearMessages();
-    const players = this.confirmed.map(toTeamPlayer);
-    for (let i = players.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [players[i], players[j]] = [players[j], players[i]];
+    const rated = this.confirmed
+      .map(toTeamPlayer)
+      .map((player) => ({
+        player,
+        rating: this.rating(player) + (Math.random() - 0.5) * RATING_JITTER,
+      }))
+      .sort((a, b) => b.rating - a.rating);
+    const size = Math.ceil(rated.length / 2);
+    const teams: Teams = { rumeni: [], rdeci: [] };
+    const sums: Record<TeamKey, number> = { rumeni: 0, rdeci: 0 };
+    for (const { player, rating } of rated) {
+      const weaker: TeamKey = sums.rumeni <= sums.rdeci ? "rumeni" : "rdeci";
+      const other: TeamKey = weaker === "rumeni" ? "rdeci" : "rumeni";
+      const team = teams[weaker].length < size ? weaker : other;
+      teams[team].push(player);
+      sums[team] += rating;
     }
-    const half = Math.ceil(players.length / 2);
-    this.preview = { rumeni: players.slice(0, half), rdeci: players.slice(half) };
+    this.preview = teams;
   }
 
   protected discardPreview(): void {

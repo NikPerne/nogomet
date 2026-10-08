@@ -1,8 +1,8 @@
-import { Component, Input } from "@angular/core";
+import { Component, Input, ChangeDetectionStrategy } from "@angular/core";
 
 @Component({
-  selector: "app-header",
-  template: `<div class="row banner">
+    selector: "app-header",
+    template: `<div class="row banner">
     <div class="col-12">
       <h1>
         {{ content.title
@@ -12,7 +12,9 @@ import { Component, Input } from "@angular/core";
       </h1>
     </div>
   </div>`,
-  styles: [],
+    styles: [],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class HeaderComponent {
   @Input() content: any;

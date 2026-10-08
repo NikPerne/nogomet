@@ -1,4 +1,4 @@
-import { Component, OnInit, TemplateRef } from "@angular/core";
+import { Component, OnInit, TemplateRef, ChangeDetectionStrategy } from "@angular/core";
 import { BsModalService, BsModalRef } from "ngx-bootstrap/modal";
 
 import { DemoDataService } from "../../services/demo-data.service";
@@ -19,9 +19,11 @@ const PAST_EVENTS_SHOWN = 5;
 const eventTime = (event: Event) => new Date(event.date).getTime();
 
 @Component({
-  selector: "app-event-list",
-  templateUrl: "event-list.component.html",
-  styles: [],
+    selector: "app-event-list",
+    templateUrl: "event-list.component.html",
+    styles: [],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class EventListComponent implements OnInit {
   constructor(

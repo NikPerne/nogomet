@@ -32,7 +32,36 @@ export class Event {
   /** Saved line-up (set by an admin), visible to everyone */
   teams?: Teams | null;
   score?: Score | null;
+  /** Player-of-the-match votes per player, most first (who voted is secret) */
+  mvpTally?: MvpTallyEntry[];
 }
+
+export interface MvpTallyEntry {
+  /** Player key, see playerKey() */
+  key: string;
+  name: string;
+  votes: number;
+}
+
+/**
+ * Identifies a player across signups, teams and votes: the userId, or "guest:<name>" /
+ * "name:<name>" for players without one (mirrors playerKeyOf in api/models/events.js)
+ */
+export const playerKey = (player: {
+  userId?: string;
+  name: string;
+  guest?: boolean;
+  guestOf?: string;
+}): string =>
+  player.userId ?? `${player.guest || player.guestOf ? "guest" : "name"}:${player.name}`;
+
+/** Voting opens at kick-off and stays open for a week (as in the API) */
+const MVP_VOTING_MS = 7 * 24 * 60 * 60 * 1000;
+
+export const isMvpVotingOpen = (event: Event): boolean => {
+  const start = new Date(event.date).getTime();
+  return !event.cancelled && Date.now() >= start && Date.now() < start + MVP_VOTING_MS;
+};
 
 /*
  * These mirror the Event model methods in api/models/events.js; keep them in sync

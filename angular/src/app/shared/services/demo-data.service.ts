@@ -1,10 +1,5 @@
 import { Inject, Injectable } from "@angular/core";
-import {
-  HttpClient,
-  HttpErrorResponse,
-  HttpHeaders,
-  HttpParams,
-} from "@angular/common/http";
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from "@angular/common/http";
 import { Observable, throwError } from "rxjs";
 import { catchError, retry } from "rxjs/operators";
 import { Event, Score, Teams } from "../classes/event";
@@ -15,6 +10,15 @@ import { environment } from "../../../environments/environment";
 import { Signup } from "../classes/signup";
 import { PlayerStats } from "../classes/player-stats";
 import { SeasonOverview } from "../classes/season";
+import { Account } from "../classes/account";
+
+/** The current user's player-of-the-match vote status for an event */
+export interface MvpStatus {
+  canVote: boolean;
+  votingOpen: boolean;
+  /** Player key the user voted for, or null */
+  myVote: string | null;
+}
 
 @Injectable({
   providedIn: "root",
@@ -35,11 +39,71 @@ export class DemoDataService {
     return this.makeAuthApiCall("register", user);
   }
 
-  public getPlayerStats(nResults: number): Observable<PlayerStats[]> {
-    const url: string = `${this.apiUrl}/users?nResults=${nResults}`;
+  /**
+   * Player statistics, all-time or for one season ("2026/27")
+   */
+  public getPlayerStats(nResults: number, season?: string): Observable<PlayerStats[]> {
+    const url: string = `${this.apiUrl}/users`;
+    let params = new HttpParams().set("nResults", nResults);
+    if (season) params = params.set("season", season);
     return this.http
-      .get<PlayerStats[]>(url)
+      .get<PlayerStats[]>(url, { params })
       .pipe(retry(1), catchError(this.handleError));
+  }
+
+  public getAccount(): Observable<Account> {
+    const url: string = `${this.apiUrl}/me`;
+    return this.http
+      .get<Account>(url, { headers: this.headers(true) })
+      .pipe(retry(1), catchError(this.handleError));
+  }
+
+  public updateSettings(emailNotifications: boolean): Observable<Account> {
+    const url: string = `${this.apiUrl}/me/settings`;
+    const body = new HttpParams().set("emailNotifications", emailNotifications);
+    return this.http
+      .put<Account>(url, body, { headers: this.headers(true) })
+      .pipe(catchError(this.handleError));
+  }
+
+  public getUsers(): Observable<Account[]> {
+    const url: string = `${this.apiUrl}/admin/users`;
+    return this.http
+      .get<Account[]>(url, { headers: this.headers(true) })
+      .pipe(retry(1), catchError(this.handleError));
+  }
+
+  public setUserAdmin(userId: string, admin: boolean): Observable<Account> {
+    const url: string = `${this.apiUrl}/admin/users/${userId}`;
+    const body = new HttpParams().set("admin", admin);
+    return this.http
+      .put<Account>(url, body, { headers: this.headers(true) })
+      .pipe(catchError(this.handleError));
+  }
+
+  public deleteUser(userId: string): Observable<unknown> {
+    const url: string = `${this.apiUrl}/admin/users/${userId}`;
+    return this.http
+      .delete(url, { headers: this.headers(true) })
+      .pipe(catchError(this.handleError));
+  }
+
+  public getMvpStatus(eventId: string): Observable<MvpStatus> {
+    const url: string = `${this.apiUrl}/events/${eventId}/mvp`;
+    return this.http
+      .get<MvpStatus>(url, { headers: this.headers(true) })
+      .pipe(retry(1), catchError(this.handleError));
+  }
+
+  public voteMvp(
+    eventId: string,
+    playerKey: string
+  ): Observable<MvpStatus & { event: Event }> {
+    const url: string = `${this.apiUrl}/events/${eventId}/mvp`;
+    const body = new HttpParams().set("playerKey", playerKey);
+    return this.http
+      .put<MvpStatus & { event: Event }>(url, body, { headers: this.headers(true) })
+      .pipe(catchError(this.handleError));
   }
 
   public getEvents(nResults: number): Observable<Event[]> {

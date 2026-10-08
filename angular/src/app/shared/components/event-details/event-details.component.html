@@ -1,83 +1,83 @@
-<ng-container *ngIf="event">
+@if (event) {
   <div class="row">
     <div [ngClass]="{ 'col-12': true, 'col-md-4': isConnected() }">
       <div class="card mt-4">
         <div class="card-header bg-light">
           <div class="d-flex justify-content-between align-items-center">
-            <h4 class="mt-1 mb-1">
-              <i class="fa-regular fa-file-lines pe-2"></i>Nogomet
-            </h4>
-            <span *ngIf="isAdmin()" class="d-flex gap-3">
-              <i
-                class="fa-solid fa-pen-to-square text-primary show-pointer"
-                title="Uredi dogodek"
-                (click)="openEditForm(editForm)"
-              ></i>
-              <i
-                class="fa-solid show-pointer"
-                [ngClass]="
-                  event.cancelled
-                    ? 'fa-rotate-left text-success'
-                    : 'fa-ban text-warning'
-                "
-                [title]="event.cancelled ? 'Obnovi dogodek' : 'Odpovej dogodek'"
-                (click)="toggleCancelled()"
-              ></i>
-              <i
-                class="fa-solid fa-trash-can text-danger show-pointer"
-                title="Izbriši dogodek"
-                (click)="deleteEvent()"
-              ></i>
-            </span>
+            <h4 class="mt-1 mb-1"><i class="fa-regular fa-file-lines pe-2"></i>Nogomet</h4>
+            @if (isAdmin()) {
+              <span class="d-flex gap-3">
+                <i
+                  class="fa-solid fa-pen-to-square text-primary show-pointer"
+                  title="Uredi dogodek"
+                  (click)="openEditForm(editForm)"
+                ></i>
+                <i
+                  class="fa-solid show-pointer"
+                  [ngClass]="
+                    event.cancelled ? 'fa-rotate-left text-success' : 'fa-ban text-warning'
+                  "
+                  [title]="event.cancelled ? 'Obnovi dogodek' : 'Odpovej dogodek'"
+                  (click)="toggleCancelled()"
+                ></i>
+                <i
+                  class="fa-solid fa-trash-can text-danger show-pointer"
+                  title="Izbriši dogodek"
+                  (click)="deleteEvent()"
+                ></i>
+              </span>
+            }
           </div>
         </div>
         <div class="card-body">
-          <div *ngIf="event.cancelled" class="alert alert-danger p-2">
-            <i class="fa-solid fa-ban pe-2"></i><b>Dogodek je odpovedan.</b>
-            <span *ngIf="event.cancelReason"> {{ event.cancelReason }}</span>
-          </div>
+          @if (event.cancelled) {
+            <div class="alert alert-danger p-2">
+              <i class="fa-solid fa-ban pe-2"></i><b>Dogodek je odpovedan.</b>
+              @if (event.cancelReason) {
+                <span> {{ event.cancelReason }}</span>
+              }
+            </div>
+          }
           <div class="row">
             <div class="col-12">
               <h6>Description</h6>
               <p>{{ event.description }}</p>
               <p class="mb-2">
                 <i class="fa-regular fa-calendar me-2"></i
-                >{{ event.date | date : "EEEE, d. MMMM yyyy" : undefined : "sl" }}
-                <ng-container *ngIf="hasTime"
-                  ><i class="fa-regular fa-clock ms-2 me-1"></i
-                  >{{ event.date | date : "HH:mm" }}</ng-container
-                >
+                >{{ event.date | date: "EEEE, d. MMMM yyyy" : undefined : "sl" }}
+                @if (hasTime) {
+                  <i class="fa-regular fa-clock ms-2 me-1"></i>{{ event.date | date: "HH:mm" }}
+                }
               </p>
             </div>
             <div class="d-flex flex-wrap align-items-center">
               <span
-                >Število prijavljenih: {{ confirmedCount
-                }}<ng-container *ngIf="event.maxPlayers">
-                  / {{ event.maxPlayers }}</ng-container
-                ></span
-              >
-              <span *ngIf="waitlistCount > 0" class="badge bg-warning text-dark ms-2"
-                >+{{ waitlistCount }} na čakanju</span
-              >
-              <span *ngIf="isFull" class="badge bg-danger ms-2">Zasedeno</span>
-              <span *ngIf="isPast && !event.cancelled" class="badge bg-secondary ms-2"
-                >Zaključeno</span
-              >
+                >Število prijavljenih: {{ confirmedCount }}
+                @if (event.maxPlayers) {
+                  <span> / {{ event.maxPlayers }}</span>
+                }
+              </span>
+              @if (waitlistCount > 0) {
+                <span class="badge bg-warning text-dark ms-2">+{{ waitlistCount }} na čakanju</span>
+              }
+              @if (isFull) {
+                <span class="badge bg-danger ms-2">Zasedeno</span>
+              }
+              @if (isPast && !event.cancelled) {
+                <span class="badge bg-secondary ms-2">Zaključeno</span>
+              }
               <span class="ms-auto">
-                <button
-                  *ngIf="!isPast && !event.cancelled"
-                  type="button"
-                  class="btn btn-sm btn-outline-primary"
-                  title="Dodaj v koledar (.ics)"
-                  (click)="addToCalendar()"
-                >
-                  <i class="fa-regular fa-calendar-plus me-1"></i>Koledar
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-outline-success"
-                  (click)="share()"
-                >
+                @if (!isPast && !event.cancelled) {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-primary"
+                    title="Dodaj v koledar (.ics)"
+                    (click)="addToCalendar()"
+                  >
+                    <i class="fa-regular fa-calendar-plus me-1"></i>Koledar
+                  </button>
+                }
+                <button type="button" class="btn btn-sm btn-outline-success" (click)="share()">
                   <i class="fa-solid fa-share-nodes me-1"></i>Deli
                 </button>
               </span>
@@ -87,28 +87,32 @@
       </div>
       <app-event-teams
         [event]="event"
+        [players]="players"
         (eventChange)="applyEventUpdate($event)"
       ></app-event-teams>
-      <div class="card mt-4" *ngIf="notResponded.length > 0">
-        <div class="card-header bg-light">
-          <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mt-1 mb-1">
-              <i class="fa-regular fa-bell pe-2"></i>Še niso odgovorili ({{
-                notResponded.length
-              }})
-            </h5>
-            <button
-              type="button"
-              class="btn btn-sm btn-outline-success"
-              title="Deli opomnik v skupino"
-              (click)="remind()"
-            >
-              <i class="fa-solid fa-share-nodes me-1"></i>Opomni
-            </button>
+      <app-event-mvp [event]="event" (eventChange)="applyEventUpdate($event)"></app-event-mvp>
+      @if (notResponded.length > 0) {
+        <div class="card mt-4">
+          <div class="card-header bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="mt-1 mb-1">
+                <i class="fa-regular fa-bell pe-2"></i>Še niso odgovorili ({{
+                  notResponded.length
+                }})
+              </h5>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-success"
+                title="Deli opomnik v skupino"
+                (click)="remind()"
+              >
+                <i class="fa-solid fa-share-nodes me-1"></i>Opomni
+              </button>
+            </div>
           </div>
+          <div class="card-body small">{{ notRespondedNames }}</div>
         </div>
-        <div class="card-body small">{{ notRespondedNames }}</div>
-      </div>
+      }
     </div>
     <div class="col-12 col-md-4">
       <div class="card mt-4">
@@ -122,62 +126,62 @@
           </div>
         </div>
         <div class="card-body">
-          <div *ngIf="!event.signedup || event.signedup.length == 0">
-            No SignUps yet, please add yours.
-          </div>
-          <div
-            class="bg-light rounded-3 px-2 py-1"
-            [ngClass]="{ 'mt-2': !first }"
-            *ngFor="
-              let signup of event.signedup | mostRecentSignup;
-              first as first
-            "
-          >
-            <div class="d-flex justify-content-between align-items-start gap-2">
-              <div id="author" class="text-break" style="min-width: 0">
-                <i class="fa-regular fa-user pe-1"></i>{{ signup.name
-                }}<span
-                  *ngIf="signup.guestOf"
-                  class="badge bg-info text-dark ms-1"
-                  [title]="'Gosta je dodal(a) ' + signup.guestOfName"
-                  >gost · {{ signup.guestOfName }}</span
-                >
+          @if (!event.signedup || event.signedup.length == 0) {
+            <div>No SignUps yet, please add yours.</div>
+          }
+          @for (signup of event.signedup | mostRecentSignup; track signup; let first = $first) {
+            <div class="bg-light rounded-3 px-2 py-1" [ngClass]="{ 'mt-2': !first }">
+              <div class="d-flex justify-content-between align-items-start gap-2">
+                <div id="author" class="text-break" style="min-width: 0">
+                  <i class="fa-regular fa-user pe-1"></i>{{ signup.name }}
+                  @if (signup.guestOf) {
+                    <span
+                      class="badge bg-info text-dark ms-1"
+                      [title]="'Gosta je dodal(a) ' + signup.guestOfName"
+                      >gost · {{ signup.guestOfName }}</span
+                    >
+                  }
+                </div>
+                <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                  <div
+                    id="attending"
+                    class="text-nowrap"
+                    [ngClass]="{
+                      'pridem-text': signup.attending,
+                      'nepridem-text': !signup.attending,
+                    }"
+                  >
+                    {{ signup.attending ? "Pridem" : "Ne pridem" }}
+                  </div>
+                  @if (waitlistPosition(signup); as position) {
+                    <span
+                      class="badge bg-warning text-dark"
+                      title="Na čakalni listi, pride na vrsto, ko se kdo odjavi"
+                      >Rezerva #{{ position }}</span
+                    >
+                  }
+                  @if (canDeleteSignUp(signup)) {
+                    <button
+                      type="button"
+                      class="btn btn-link btn-sm p-1 m-0 ms-1"
+                      title="Odstrani prijavo"
+                      aria-label="Odstrani prijavo"
+                      (click)="deleteSignup(signup._id)"
+                    >
+                      <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                  }
+                </div>
               </div>
-              <div class="d-flex align-items-center gap-1 flex-shrink-0">
-                <div
-                  id="attending"
-                  class="text-nowrap"
-                  [ngClass]="{
-                    'pridem-text': signup.attending,
-                    'nepridem-text': !signup.attending
-                  }"
-                >{{ signup.attending ? "Pridem" : "Ne pridem" }}</div>
-                <span
-                  *ngIf="waitlistPosition(signup) as position"
-                  class="badge bg-warning text-dark"
-                  title="Na čakalni listi, pride na vrsto, ko se kdo odjavi"
-                  >Rezerva #{{ position }}</span
-                >
-                <button
-                  *ngIf="canDeleteSignUp(signup)"
-                  type="button"
-                  class="btn btn-link btn-sm p-1 m-0 ms-1"
-                  title="Odstrani prijavo"
-                  aria-label="Odstrani prijavo"
-                  (click)="deleteSignup(signup._id)"
-                >
-                  <i class="fa-solid fa-trash-can"></i>
-                </button>
-              </div>
+              @if (signup.note) {
+                <div class="small fst-italic text-secondary text-break">„{{ signup.note }}“</div>
+              }
+              <small class="text-secondary"
+                ><i class="fa-regular fa-calendar me-1"></i
+                >{{ signup.createdOn | date: "d. M. yyyy" : undefined : "sl" }}</small
+              >
             </div>
-            <div *ngIf="signup.note" class="small fst-italic text-secondary text-break">
-              „{{ signup.note }}“
-            </div>
-            <small class="text-secondary"
-              ><i class="fa-regular fa-calendar me-1"></i
-              >{{ signup.createdOn | date : "d. M. yyyy" : undefined : "sl" }}</small
-            >
-          </div>
+          }
         </div>
       </div>
     </div>
@@ -191,14 +195,15 @@
       <i class="fa-solid fa-check pe-2"></i>{{ infoMessage }}
     </div>
   </div>
-  <div *ngIf="signupsClosed; else answerButtons" class="col-md-8">
-    <small class="text-secondary">{{
-      event.cancelled
-        ? "Dogodek je odpovedan, prijave so zaprte."
-        : "Dogodek je že mimo, prijave so zaprte."
-    }}</small>
-  </div>
-  <ng-template #answerButtons>
+  @if (signupsClosed) {
+    <div class="col-md-8">
+      <small class="text-secondary">{{
+        event.cancelled
+          ? "Dogodek je odpovedan, prijave so zaprte."
+          : "Dogodek je že mimo, prijave so zaprte."
+      }}</small>
+    </div>
+  } @else {
     <div class="col-md-8 d-flex gap-2 align-items-center">
       <input
         type="text"
@@ -208,24 +213,27 @@
         placeholder="Opomba (neobvezno), npr. pridem 10 min kasneje"
         aria-label="Opomba"
       />
-      <button
-        *ngIf="ownSignup && noteChanged"
-        type="button"
-        class="btn btn-sm btn-outline-primary text-nowrap"
-        [disabled]="!isConnected()"
-        (click)="saveNote()"
-      >
-        <i class="fa-regular fa-floppy-disk me-1"></i>Shrani opombo
-      </button>
+      @if (ownSignup && noteChanged) {
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-primary text-nowrap"
+          [disabled]="!isConnected()"
+          (click)="saveNote()"
+        >
+          <i class="fa-regular fa-floppy-disk me-1"></i>Shrani opombo
+        </button>
+      }
     </div>
     <div class="modal-footer col-md-8">
-      <small *ngIf="ownSignup as own" class="text-secondary me-auto"
-        >Tvoj odgovor: {{ own.attending ? "Pridem" : "Ne pridem"
-        }}<ng-container *ngIf="waitlistPosition(own) as position">
-          (rezerva #{{ position }})</ng-container
+      @if (ownSignup; as own) {
+        <small class="text-secondary me-auto"
+          >Tvoj odgovor: {{ own.attending ? "Pridem" : "Ne pridem" }}
+          @if (waitlistPosition(own); as position) {
+            <span> (rezerva #{{ position }})</span>
+          }
+          – lahko ga spremeniš</small
         >
-        – lahko ga spremeniš</small
-      >
+      }
       <button
         type="button"
         class="btn btn-sm btn-primary"
@@ -268,7 +276,7 @@
         <i class="fa-solid fa-user-plus me-1"></i>Dodaj gosta
       </button>
     </form>
-  </ng-template>
+  }
   <ng-template #editForm>
     <app-event-form
       title="Edit event"
@@ -278,4 +286,4 @@
       (dismiss)="closeEditForm()"
     ></app-event-form>
   </ng-template>
-</ng-container>
+}

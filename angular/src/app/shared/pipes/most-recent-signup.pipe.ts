@@ -2,7 +2,8 @@ import { Pipe, PipeTransform } from "@angular/core";
 import { Signup } from "../classes/signup";
 
 @Pipe({
-  name: "mostRecentSignup",
+    name: "mostRecentSignup",
+    standalone: false
 })
 export class MostRecentSignupPipe implements PipeTransform {
   /**

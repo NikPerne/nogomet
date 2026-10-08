@@ -1,8 +1,8 @@
 <div class="modal-header">
-  <h4 class="modal-title pull-left">
-    <i class="fa-regular fa-calendar-plus pe-2"></i>{{ title }}
-  </h4>
-  <small *ngIf="hint" class="text-secondary ms-3">{{ hint }}</small>
+  <h4 class="modal-title pull-left"><i class="fa-regular fa-calendar-plus pe-2"></i>{{ title }}</h4>
+  @if (hint) {
+    <small class="text-secondary ms-3">{{ hint }}</small>
+  }
   <button
     type="button"
     class="btn-close close pull-right"
@@ -14,8 +14,7 @@
 </div>
 <div class="modal-body">
   <div class="alert alert-dark p-2" [hidden]="!(validationError || error)">
-    <i class="fa-solid fa-triangle-exclamation pe-2"></i
-    >{{ validationError || error }}
+    <i class="fa-solid fa-triangle-exclamation pe-2"></i>{{ validationError || error }}
   </div>
   <div class="form-group">
     <label for="event-name" class="form-label mt-2">Name of event</label>
@@ -27,9 +26,7 @@
     />
   </div>
   <div class="form-group">
-    <label for="event-description" class="form-label mt-2"
-      >Description of event</label
-    >
+    <label for="event-description" class="form-label mt-2">Description of event</label>
     <textarea
       id="event-description"
       [(ngModel)]="description"
@@ -41,21 +38,11 @@
   <div class="row">
     <div class="form-group col-7">
       <label for="event-date" class="form-label mt-2">Date of event</label>
-      <input
-        id="event-date"
-        type="date"
-        [(ngModel)]="date"
-        class="form-control form-control-sm"
-      />
+      <input id="event-date" type="date" [(ngModel)]="date" class="form-control form-control-sm" />
     </div>
     <div class="form-group col-5">
       <label for="event-time" class="form-label mt-2">Start time</label>
-      <input
-        id="event-time"
-        type="time"
-        [(ngModel)]="time"
-        class="form-control form-control-sm"
-      />
+      <input id="event-time" type="time" [(ngModel)]="time" class="form-control form-control-sm" />
     </div>
   </div>
   <div class="form-group">

@@ -1,12 +1,14 @@
-import { Component } from "@angular/core";
+import { Component, ChangeDetectionStrategy } from "@angular/core";
 import { User } from "../../classes/user";
 import { AuthenticationService } from "../../services/authentication.service";
 import { ConnectionService } from "../../services/connection.service";
 
 @Component({
-  selector: "app-framework",
-  templateUrl: "./framework.component.html",
-  styles: [],
+    selector: "app-framework",
+    templateUrl: "./framework.component.html",
+    styles: [],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class FrameworkComponent {
   constructor(
@@ -24,6 +26,10 @@ export class FrameworkComponent {
 
   public isLoggedIn(): boolean {
     return this.authenticationService.isLoggedIn();
+  }
+
+  public isAdmin(): boolean {
+    return this.authenticationService.getCurrentUser()?.admin ?? false;
   }
 
   public getCurrentUser(): string {

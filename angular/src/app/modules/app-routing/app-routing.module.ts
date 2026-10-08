@@ -13,6 +13,7 @@ import { SeasonComponent } from "../../shared/components/season/season.component
 import { ProfileComponent } from "../../shared/components/profile/profile.component";
 import { ForgotPasswordComponent } from "../../shared/components/forgot-password/forgot-password.component";
 import { ResetPasswordComponent } from "../../shared/components/reset-password/reset-password.component";
+import { AdminUsersComponent } from "../../shared/components/admin-users/admin-users.component";
 
 const routes: Routes = [
   { path: "", component: HomepageComponent, canActivate: [AuthGuard]},
@@ -24,6 +25,8 @@ const routes: Routes = [
   { path: "register", component: RegisterComponent },
   { path: "login", component: LoginComponent },
   { path: "profil", component: ProfileComponent, canActivate: [AuthGuard]},
+  // The page itself shows a notice to non-admins; the API enforces admin rights
+  { path: "uporabniki", component: AdminUsersComponent, canActivate: [AuthGuard]},
   { path: "pozabljeno-geslo", component: ForgotPasswordComponent },
   // Opened from the reset email link (?token=...); keep the path in sync with the API
   { path: "ponastavi-geslo", component: ResetPasswordComponent },

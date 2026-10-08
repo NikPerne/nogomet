@@ -45,6 +45,8 @@ const usersSchema = new mongoose.Schema({
   hash: { type: String, required: [true, "Hash is required!"] },
   salt: { type: String, required: [true, "Salt is required!"] },
   admin: {type: Boolean, default: false},
+  // Opt-out for notification emails (reminders, cancellations); password resets are always sent
+  emailNotifications: { type: Boolean, default: true },
   // Password reset: only a SHA-256 hash of the emailed token is stored
   resetTokenHash: { type: String },
   resetTokenExpires: { type: Date },

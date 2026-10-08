@@ -1,8 +1,8 @@
-import { Component } from "@angular/core";
+import { Component, ChangeDetectionStrategy } from "@angular/core";
 
 @Component({
-  selector: "app-about",
-  template: `<h1>About</h1>
+    selector: "app-about",
+    template: `<h1>About</h1>
     <div class="row">
       <div class="col-12 col-lg-8">
         <p>
@@ -52,6 +52,8 @@ import { Component } from "@angular/core";
         </p>
       </div>
     </div>`,
-  styles: [],
+    styles: [],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class AboutComponent {}

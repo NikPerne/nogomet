@@ -3,7 +3,7 @@ import { registerLocaleData } from "@angular/common";
 import localeSl from "@angular/common/locales/sl";
 registerLocaleData(localeSl, "sl");
 import { BrowserModule } from "@angular/platform-browser";
-import { HttpClientModule } from "@angular/common/http";
+import { provideHttpClient, withInterceptorsFromDi, withXhr } from "@angular/common/http";
 import { ModalModule, BsModalService } from "ngx-bootstrap/modal";
 import { FormsModule } from '@angular/forms';
 import { NgApexchartsModule } from "ng-apexcharts";
@@ -30,6 +30,8 @@ import { EventTeamsComponent } from './shared/components/event-teams/event-teams
 import { ProfileComponent } from './shared/components/profile/profile.component';
 import { ForgotPasswordComponent } from './shared/components/forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './shared/components/reset-password/reset-password.component';
+import { AdminUsersComponent } from './shared/components/admin-users/admin-users.component';
+import { EventMvpComponent } from './shared/components/event-mvp/event-mvp.component';
 
 @NgModule({
   declarations: [
@@ -52,23 +54,24 @@ import { ResetPasswordComponent } from './shared/components/reset-password/reset
     ProfileComponent,
     ForgotPasswordComponent,
     ResetPasswordComponent,
+    AdminUsersComponent,
+    EventMvpComponent,
   ],
   imports: [
     BrowserModule,
     NgApexchartsModule,
-    HttpClientModule,
     AppRoutingModule,
     BrowserAnimationsModule,
     ModalModule,
     FormsModule,
-    ServiceWorkerModule.register('ngsw-worker.js', {
+    ServiceWorkerModule.register("ngsw-worker.js", {
       enabled: !isDevMode(),
       // Register the ServiceWorker as soon as the application is stable
       // or after 30 seconds (whichever comes first).
-      registrationStrategy: 'registerWhenStable:30000'
-    })
+      registrationStrategy: "registerWhenStable:30000",
+    }),
   ],
-  providers: [BsModalService],
+  providers: [BsModalService, provideHttpClient(withXhr(), withInterceptorsFromDi())],
   bootstrap: [FrameworkComponent],
 })
 export class AppModule {}

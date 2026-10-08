@@ -1,4 +1,4 @@
-import { Component } from "@angular/core";
+import { Component, ChangeDetectionStrategy } from "@angular/core";
 import { Router } from "@angular/router";
 import { HttpErrorResponse } from "@angular/common/http";
 import { throwError } from "rxjs";
@@ -9,8 +9,8 @@ import { HistoryService } from "../../services/history.service";
 import { ConnectionService } from "../../services/connection.service";
 
 @Component({
-  selector: "app-register",
-  template: `<app-header [content]="header"></app-header>
+    selector: "app-register",
+    template: `<app-header [content]="header"></app-header>
     <div class="row">
       <div class="col-12 col-md-8">
         <p>
@@ -18,11 +18,13 @@ import { ConnectionService } from "../../services/connection.service";
           <a routerLink="/login" class="link-primary">login</a> instead.
         </p>
         <form (ngSubmit)="onRegisterSubmit()" autocomplete="off">
-          <div *ngIf="formError" class="form-group">
-            <div class="alert alert-dark p-2 mt-4" role="alert">
-              <i class="fas fa-exclamation-triangle pe-2"></i>{{ formError }}
+          @if (formError) {
+            <div class="form-group">
+              <div class="alert alert-dark p-2 mt-4" role="alert">
+                <i class="fas fa-exclamation-triangle pe-2"></i>{{ formError }}
+              </div>
             </div>
-          </div>
+          }
           <div class="form-group">
             <label for="name" class="form-label mb-1">Full name</label>
             <input
@@ -32,41 +34,43 @@ import { ConnectionService } from "../../services/connection.service";
               name="name"
               placeholder="Enter your name"
               [(ngModel)]="credentials.name"
-            />
-          </div>
-          <div class="form-group">
-            <label for="email" class="form-label mb-1 mt-3"
-              >E-mail address</label
-            >
-            <input
-              type="text"
-              class="form-control form-control-sm"
-              id="email"
-              name="email"
-              placeholder="Enter e-mail address"
-              [(ngModel)]="credentials.email"
-            />
-          </div>
-          <div class="form-group">
-            <label for="password" class="form-label mb-1 mt-3">Password</label>
-            <input
-              type="password"
-              class="form-control form-control-sm"
-              id="password"
-              name="password"
-              placeholder="Enter password"
-              [(ngModel)]="credentials.password"
-            />
-          </div>
-          <div class="form-group mt-3">
-            <button [disabled]="!isConnected()" type="submit" class="btn btn-sm btn-primary me-2">
-              <i class="fa-regular fa-circle-check pe-2"></i>Register
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>`,
-  styles: [],
+              />
+            </div>
+            <div class="form-group">
+              <label for="email" class="form-label mb-1 mt-3"
+                >E-mail address</label
+                >
+                <input
+                  type="text"
+                  class="form-control form-control-sm"
+                  id="email"
+                  name="email"
+                  placeholder="Enter e-mail address"
+                  [(ngModel)]="credentials.email"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="password" class="form-label mb-1 mt-3">Password</label>
+                  <input
+                    type="password"
+                    class="form-control form-control-sm"
+                    id="password"
+                    name="password"
+                    placeholder="Enter password"
+                    [(ngModel)]="credentials.password"
+                    />
+                  </div>
+                  <div class="form-group mt-3">
+                    <button [disabled]="!isConnected()" type="submit" class="btn btn-sm btn-primary me-2">
+                      <i class="fa-regular fa-circle-check pe-2"></i>Register
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>`,
+    styles: [],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class RegisterComponent {
   constructor(
