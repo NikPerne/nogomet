@@ -256,16 +256,19 @@ const forgotPassword = async (req, res) => {
   res.status(200).json({
     message: "If an account with this e-mail exists, we sent a link to reset the password.",
   });
+  // Outcomes are logged (server logs are private) to make delivery problems diagnosable
   try {
     const user = await User.findOne({ email }).exec();
+    if (!user) return console.log("Password reset: no account with the given e-mail.");
     const recentlySent =
-      user?.resetRequestedAt &&
+      user.resetRequestedAt &&
       Date.now() - user.resetRequestedAt.getTime() < RESET_RESEND_INTERVAL_MS;
-    if (user && !recentlySent) {
-      const token = user.createResetToken();
-      await user.save();
-      await sendResetEmail(user, `${appUrl()}/ponastavi-geslo?token=${token}`);
-    }
+    if (recentlySent)
+      return console.log(`Password reset: skipped for user ${user._id}, email sent less than a minute ago.`);
+    const token = user.createResetToken();
+    await user.save();
+    await sendResetEmail(user, `${appUrl()}/ponastavi-geslo?token=${token}`);
+    console.log(`Password reset: email handed to the mail service for user ${user._id}.`);
   } catch (err) {
     console.error("Password reset email failed:", err.message);
   }
