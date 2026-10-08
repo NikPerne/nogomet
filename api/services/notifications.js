@@ -115,6 +115,61 @@ const notifyCancellation = async (event) => {
 };
 
 /**
+ * Regulars: users who played (as confirmed players) in at least one past, non-cancelled event
+ */
+const findRegulars = async (now = Date.now()) => {
+  const [users, pastEvents] = await Promise.all([
+    User.find().select("name email emailNotifications").exec(),
+    Event.find({ date: { $lt: new Date(now) }, cancelled: { $ne: true } })
+      .select("date maxPlayers signedup")
+      .exec(),
+  ]);
+  return users.filter((user) =>
+    pastEvents.some((event) =>
+      event.confirmedSignups().some((signup) => isOwnSignup(signup, user))
+    )
+  );
+};
+
+/**
+ * New match announcements are off unless NOTIFY_NEW_EVENTS=true
+ */
+const newEventNotificationsEnabled = () => process.env.NOTIFY_NEW_EVENTS === "true";
+
+/**
+ * Announces a newly created upcoming event to regulars, by email (unless turned off) and
+ * push - only when NOTIFY_NEW_EVENTS=true. Used for admin-created and auto-created matches.
+ * Returns { emailsSent, pushesSent }.
+ */
+const notifyNewEvent = async (event) => {
+  if (!newEventNotificationsEnabled() || event.cancelled || event.date <= new Date())
+    return { emailsSent: 0, pushesSent: 0 };
+  const recipients = await findRegulars();
+  const when = formatWhen(event.date);
+  const link = eventLink(event);
+  const limit = event.maxPlayers ? ` Največ igralcev: ${event.maxPlayers}.` : "";
+  const emailsSent = await sendToEach(recipients, (user) => ({
+    subject: `Nova tekma: ${event.name}, ${when}`,
+    text:
+      `Pozdravljen/a ${user.name},\n\n` +
+      `dodana je nova tekma »${event.name}« (${when}).${limit}\n` +
+      `Sporoči, ali prideš: ${link}` +
+      footer.text,
+    html:
+      `<p>Pozdravljen/a ${escapeHtml(user.name)},</p>` +
+      `<p>dodana je nova tekma <b>${escapeHtml(event.name)}</b> (${escapeHtml(when)}).${escapeHtml(limit)}</p>` +
+      `<p><a href="${link}">Pridem / Ne pridem</a></p>` +
+      footer.html,
+  }));
+  const pushesSent = await sendPushToUsers(
+    recipients.map((user) => user._id),
+    { title: `Nova tekma: ${event.name}`, body: when, url: `/events/${event._id}` }
+  );
+  console.log(`New event: ${emailsSent} email(s), ${pushesSent} push(es) for event ${event._id}.`);
+  return { emailsSent, pushesSent };
+};
+
+/**
  * For upcoming events (within the reminder window, not cancelled, not yet reminded),
  * reminds regulars - users who played at least one past game - who haven't answered:
  * by email (unless turned off) and by push. Returns { events, emailsSent, pushesSent }.
@@ -128,17 +183,7 @@ const sendReminders = async () => {
   }).exec();
   if (events.length === 0) return { events: 0, emailsSent: 0, pushesSent: 0 };
 
-  const [users, pastEvents] = await Promise.all([
-    User.find().select("name email emailNotifications").exec(),
-    Event.find({ date: { $lt: new Date(now) }, cancelled: { $ne: true } })
-      .select("date maxPlayers signedup")
-      .exec(),
-  ]);
-  const regulars = users.filter((user) =>
-    pastEvents.some((event) =>
-      event.confirmedSignups().some((signup) => isOwnSignup(signup, user))
-    )
-  );
+  const regulars = await findRegulars(now);
 
   let emailsSent = 0;
   let pushesSent = 0;
@@ -179,4 +224,4 @@ const sendReminders = async () => {
   return { events: events.length, emailsSent, pushesSent };
 };
 
-module.exports = { notifyCancellation, sendReminders, formatWhen };
+module.exports = { notifyCancellation, notifyNewEvent, sendReminders, formatWhen };

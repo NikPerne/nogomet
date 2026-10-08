@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Event = mongoose.model("Event");
 const { addDaysInZone, calendarDaysBetween } = require("./time");
+const { notifyNewEvent } = require("./notifications");
 
 /**
  * Weekly events are created automatically unless AUTO_WEEKLY_EVENTS=false
@@ -58,6 +59,10 @@ const createNextWeeklyEvent = async (now = new Date()) => {
     signedup: [],
   });
   console.log(`Weekly event ${event._id} created for ${date.toISOString()}.`);
+  // Only when NOTIFY_NEW_EVENTS=true; a failed announcement doesn't undo the new event
+  await notifyNewEvent(event).catch((err) =>
+    console.error("New event notifications failed:", err.message)
+  );
   return event;
 };
 

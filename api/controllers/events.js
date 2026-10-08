@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Event = mongoose.model("Event");
 const { parseLimit, isValidId } = require("./helpers");
-const { notifyCancellation } = require("../services/notifications");
+const { notifyCancellation, notifyNewEvent } = require("../services/notifications");
 
 const EDITABLE_FIELDS = [
   "name",
@@ -100,6 +100,7 @@ const eventsReadOne = async (req, res) => {
  * /events:
  *   post:
  *     summary: Create a new event (administrators only)
+ *     description: With NOTIFY_NEW_EVENTS=true, regulars are told about the new match by email and push.
  *     tags: [Events]
  *     security:
  *      - jwt: []
@@ -129,6 +130,10 @@ const createEvent = async (req, res) => {
       signedup: [],
     });
     res.status(201).json(event);
+    // Only when NOTIFY_NEW_EVENTS=true; sent after responding, so the admin doesn't wait
+    notifyNewEvent(event).catch((err) =>
+      console.error("New event notifications failed:", err.message)
+    );
   } catch (err) {
     if (err.name === "ValidationError" || err.name === "CastError")
       res.status(400).json({ message: err.message });
