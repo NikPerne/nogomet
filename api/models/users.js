@@ -45,7 +45,39 @@ const usersSchema = new mongoose.Schema({
   hash: { type: String, required: [true, "Hash is required!"] },
   salt: { type: String, required: [true, "Salt is required!"] },
   admin: {type: Boolean, default: false},
+  // Password reset: only a SHA-256 hash of the emailed token is stored
+  resetTokenHash: { type: String },
+  resetTokenExpires: { type: Date },
+  resetRequestedAt: { type: Date },
 });
+
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
+
+const hashResetToken = (token) =>
+  crypto.createHash("sha256").update(token).digest("hex");
+
+/**
+ * Creates a one-time reset token (valid 1 hour) and returns it; only its hash is stored
+ */
+usersSchema.methods.createResetToken = function () {
+  const token = crypto.randomBytes(32).toString("hex");
+  this.resetTokenHash = hashResetToken(token);
+  this.resetTokenExpires = new Date(Date.now() + RESET_TOKEN_TTL_MS);
+  this.resetRequestedAt = new Date();
+  return token;
+};
+
+usersSchema.methods.clearResetToken = function () {
+  this.resetTokenHash = undefined;
+  this.resetTokenExpires = undefined;
+};
+
+usersSchema.statics.findByResetToken = function (token) {
+  return this.findOne({
+    resetTokenHash: hashResetToken(token),
+    resetTokenExpires: { $gt: new Date() },
+  });
+};
 
 usersSchema.methods.setPassword = function (password) {
   this.salt = crypto.randomBytes(16).toString("hex");

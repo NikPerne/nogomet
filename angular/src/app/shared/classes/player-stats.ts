@@ -6,4 +6,8 @@ export class PlayerStats {
   attendanceRate!: number;
   currentStreak!: number;
   lastPlayed!: Date | null;
+  /** From events with saved teams and a score */
+  wins!: number;
+  draws!: number;
+  losses!: number;
 }

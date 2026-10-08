@@ -6,6 +6,7 @@ const ctrlSignup = require("../controllers/signup");
 const ctrlUsers = require("../controllers/users");
 const ctrlAuthentication = require("../controllers/authentication");
 const ctrlSeason = require("../controllers/season");
+const ctrlTeams = require("../controllers/teams");
 
 /**
  * Users
@@ -37,6 +38,18 @@ router
 router.post("/events/:eventId/guests", auth, ctrlSignup.guestCreate);
 
 /**
+ * Teams and score
+ */
+router
+  .route("/events/:eventId/teams")
+  .put(adminOnly, ctrlTeams.saveTeams)
+  .delete(adminOnly, ctrlTeams.clearTeams);
+router
+  .route("/events/:eventId/score")
+  .put(adminOnly, ctrlTeams.saveScore)
+  .delete(adminOnly, ctrlTeams.clearScore);
+
+/**
  * Season membership fees
  */
 router.get("/season", auth, ctrlSeason.seasonOverview);
@@ -47,5 +60,8 @@ router.put("/season/payments/:userId", adminOnly, ctrlSeason.setPayment);
  */
 router.post("/register", ctrlAuthentication.register);
 router.post("/login", ctrlAuthentication.login);
+router.put("/me/password", auth, ctrlAuthentication.changePassword);
+router.post("/password/forgot", ctrlAuthentication.forgotPassword);
+router.post("/password/reset", ctrlAuthentication.resetPassword);
 
 module.exports = router;

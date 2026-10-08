@@ -1,5 +1,25 @@
 import { Signup } from "./signup";
 
+export type TeamKey = "rumeni" | "rdeci";
+
+export interface TeamPlayer {
+  name: string;
+  /** Missing for guests and legacy signups */
+  userId?: string;
+  guest?: boolean;
+}
+
+export type Teams = Record<TeamKey, TeamPlayer[]>;
+export type Score = Record<TeamKey, number>;
+
+/**
+ * The two teams, in display order (bib colours: yellow and red)
+ */
+export const TEAMS: readonly { key: TeamKey; label: string; emoji: string; color: string }[] = [
+  { key: "rumeni", label: "Rumeni", emoji: "🟡", color: "#f2c200" },
+  { key: "rdeci", label: "Rdeči", emoji: "🔴", color: "#d62828" },
+];
+
 export class Event {
   _id!: string;
   name!: string;
@@ -9,6 +29,9 @@ export class Event {
   cancelled?: boolean;
   cancelReason?: string | null;
   signedup?: Signup[];
+  /** Saved line-up (set by an admin), visible to everyone */
+  teams?: Teams | null;
+  score?: Score | null;
 }
 
 /*

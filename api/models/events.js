@@ -61,6 +61,83 @@ const signupSchema = new mongoose.Schema({
 });
 
 /**
+ * Team keys and their order; used in teams, score and statistics
+ */
+const TEAM_KEYS = ["rumeni", "rdeci"];
+
+/**
+ * @openapi
+ * components:
+ *  schemas:
+ *   TeamPlayer:
+ *    type: object
+ *    properties:
+ *     name:
+ *      type: string
+ *      example: Nik Perne
+ *     userId:
+ *      type: string
+ *      description: Missing for guests and legacy signups.
+ *     guest:
+ *      type: boolean
+ *      description: True for guests (never matched to a user by name).
+ *    required:
+ *     - name
+ *   Teams:
+ *    type: object
+ *    description: Saved team line-up (Rumeni = yellow, Rdeči = red).
+ *    properties:
+ *     rumeni:
+ *      type: array
+ *      items:
+ *       $ref: '#/components/schemas/TeamPlayer'
+ *     rdeci:
+ *      type: array
+ *      items:
+ *       $ref: '#/components/schemas/TeamPlayer'
+ *   Score:
+ *    type: object
+ *    description: Final score; only possible when teams are saved.
+ *    properties:
+ *     rumeni:
+ *      type: integer
+ *      example: 7
+ *     rdeci:
+ *      type: integer
+ *      example: 5
+ */
+const teamPlayerSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      trim: true,
+      required: [true, "Player name is required!"],
+      maxlength: [60, "Player name can be at most 60 characters!"],
+    },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    guest: { type: Boolean },
+  },
+  { _id: false }
+);
+
+const teamsSchema = new mongoose.Schema(
+  Object.fromEntries(TEAM_KEYS.map((key) => [key, [teamPlayerSchema]])),
+  { _id: false }
+);
+
+const goals = {
+  type: Number,
+  required: [true, "Both scores are required!"],
+  min: [0, "Score can't be negative!"],
+  max: [99, "Score can be at most 99!"],
+  validate: { validator: Number.isInteger, message: "Score must be a whole number!" },
+};
+const scoreSchema = new mongoose.Schema(
+  Object.fromEntries(TEAM_KEYS.map((key) => [key, goals])),
+  { _id: false }
+);
+
+/**
  * @openapi
  * components:
  *  schemas:
@@ -97,6 +174,10 @@ const signupSchema = new mongoose.Schema({
  *      description: List of users signed up for the event.
  *      items:
  *       $ref: '#/components/schemas/Signup'
+ *     teams:
+ *      $ref: '#/components/schemas/Teams'
+ *     score:
+ *      $ref: '#/components/schemas/Score'
  *    required:
  *     - name
  *     - description
@@ -121,6 +202,8 @@ const eventSchema = new mongoose.Schema({
   signedup: {
     type: [signupSchema],
   },
+  teams: { type: teamsSchema },
+  score: { type: scoreSchema },
 });
 
 /**
@@ -169,4 +252,31 @@ eventSchema.methods.isFull = function () {
   return !!this.maxPlayers && this.attendingInOrder().length >= this.maxPlayers;
 };
 
+/**
+ * The user's team key ("rumeni"/"rdeci") in the saved teams, or undefined.
+ * Players without userId (legacy) match by name; guests never match a user.
+ */
+eventSchema.methods.teamOf = function (user) {
+  return TEAM_KEYS.find((key) =>
+    (this.teams?.[key] ?? []).some((player) =>
+      player.userId
+        ? player.userId.equals(user._id)
+        : !player.guest && player.name === user.name
+    )
+  );
+};
+
+/**
+ * "win", "draw" or "loss" for the user, or undefined without a score or team
+ */
+eventSchema.methods.resultFor = function (user) {
+  const team = this.teamOf(user);
+  if (!team || !this.score) return undefined;
+  const other = TEAM_KEYS.find((key) => key !== team);
+  const diff = this.score[team] - this.score[other];
+  return diff > 0 ? "win" : diff < 0 ? "loss" : "draw";
+};
+
 mongoose.model("Event", eventSchema, "Events");
+
+module.exports = { TEAM_KEYS };

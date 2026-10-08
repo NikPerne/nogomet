@@ -10,6 +10,9 @@ import { AuthGuard } from "../../shared/services/auth-guard.service";
 import { EventListComponent } from "../../shared/components/event-list/event-list.component";
 import { LeaderboardComponent } from "../../shared/components/leaderboard/leaderboard.component";
 import { SeasonComponent } from "../../shared/components/season/season.component";
+import { ProfileComponent } from "../../shared/components/profile/profile.component";
+import { ForgotPasswordComponent } from "../../shared/components/forgot-password/forgot-password.component";
+import { ResetPasswordComponent } from "../../shared/components/reset-password/reset-password.component";
 
 const routes: Routes = [
   { path: "", component: HomepageComponent, canActivate: [AuthGuard]},
@@ -20,6 +23,10 @@ const routes: Routes = [
   { path: "events/:eventId", component: DetailsPageEventsComponent, canActivate: [AuthGuard]},
   { path: "register", component: RegisterComponent },
   { path: "login", component: LoginComponent },
+  { path: "profil", component: ProfileComponent, canActivate: [AuthGuard]},
+  { path: "pozabljeno-geslo", component: ForgotPasswordComponent },
+  // Opened from the reset email link (?token=...); keep the path in sync with the API
+  { path: "ponastavi-geslo", component: ResetPasswordComponent },
   // Unknown URLs go to the homepage instead of an empty page
   { path: "**", redirectTo: "" },
 ];

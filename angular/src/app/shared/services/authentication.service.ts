@@ -29,6 +29,15 @@ export class AuthenticationService {
       .pipe(tap((authResponse) => this.saveToken(authResponse.token)));
   }
 
+  /**
+   * Sets a new password with the emailed token; the user is logged in afterwards
+   */
+  public resetPassword(token: string, newPassword: string): Observable<AuthResponse> {
+    return this.demoDataService
+      .resetPassword(token, newPassword)
+      .pipe(tap((authResponse) => this.saveToken(authResponse.token)));
+  }
+
   public logout(): void {
     this.storage.removeItem("demo-token");
     this.router.navigate(["/login"]);

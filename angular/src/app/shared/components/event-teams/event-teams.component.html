@@ -1,0 +1,131 @@
+<div class="card mt-4" *ngIf="visible">
+  <div
+    class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap gap-2"
+  >
+    <h4 class="mt-1 mb-1">
+      <i class="fa-solid fa-people-group pe-2"></i>Ekipe
+    </h4>
+    <div class="d-flex flex-wrap gap-1">
+      <button
+        *ngIf="canShuffle"
+        type="button"
+        class="btn btn-sm btn-outline-primary m-0"
+        (click)="shuffle()"
+      >
+        <i class="fa-solid fa-shuffle me-1"></i>{{ shown ? "Premešaj" : "Razdeli ekipe" }}
+      </button>
+      <button
+        *ngIf="shown"
+        type="button"
+        class="btn btn-sm btn-outline-success m-0"
+        (click)="share()"
+      >
+        <i class="fa-solid fa-share-nodes me-1"></i>Deli ekipe
+      </button>
+    </div>
+  </div>
+
+  <div class="card-body" *ngIf="shown as teams">
+    <div *ngIf="errorMessage" class="alert alert-dark p-2">
+      <i class="fa-solid fa-triangle-exclamation pe-2"></i>{{ errorMessage }}
+    </div>
+    <div *ngIf="infoMessage" class="alert alert-success p-2">
+      <i class="fa-solid fa-check pe-2"></i>{{ infoMessage }}
+    </div>
+
+    <div *ngIf="preview" class="d-flex flex-wrap align-items-center gap-2 mb-3">
+      <span class="badge bg-secondary">Predlog – ni shranjen</span>
+      <ng-container *ngIf="isAdmin()">
+        <button
+          type="button"
+          class="btn btn-sm btn-primary m-0"
+          [disabled]="!isConnected()"
+          (click)="save()"
+        >
+          <i class="fa-regular fa-floppy-disk me-1"></i>Shrani za vse
+        </button>
+        <button
+          *ngIf="event.teams"
+          type="button"
+          class="btn btn-sm btn-link m-0"
+          (click)="discardPreview()"
+        >
+          Nazaj na shranjene
+        </button>
+      </ng-container>
+    </div>
+    <div *ngIf="outdated && isAdmin()" class="alert alert-warning p-2 small">
+      <i class="fa-solid fa-triangle-exclamation pe-1"></i>Prijave so se spremenile,
+      odkar so bile ekipe shranjene. Premešaj in shrani znova.
+    </div>
+
+    <div *ngIf="event.score && !preview" class="text-center mb-3">
+      <span class="score">
+        <span class="team-dot me-1" [style.background]="teamsMeta[0].color"></span>
+        {{ event.score.rumeni }} : {{ event.score.rdeci }}
+        <span class="team-dot ms-1" [style.background]="teamsMeta[1].color"></span>
+      </span>
+    </div>
+
+    <div class="row">
+      <div class="col-6" *ngFor="let team of teamsMeta">
+        <h6 class="d-flex align-items-center gap-2">
+          <span class="team-dot" [style.background]="team.color"></span>{{ team.label }}
+          <small class="text-secondary fw-normal">({{ teams[team.key].length }})</small>
+        </h6>
+        <ul class="list-unstyled mb-0">
+          <li *ngFor="let player of teams[team.key]" class="text-break">
+            <i class="fa-regular fa-user pe-2"></i>{{ player.name }}
+            <small *ngIf="player.guest" class="text-secondary">(gost)</small>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <ng-container *ngIf="isAdmin() && event.teams && !preview">
+      <hr />
+      <form class="d-flex flex-wrap align-items-center gap-2" (ngSubmit)="saveScore()">
+        <span class="small text-secondary">Rezultat:</span>
+        <span class="team-dot" [style.background]="teamsMeta[0].color"></span>
+        <input
+          type="number"
+          name="scoreRumeni"
+          min="0"
+          max="99"
+          step="1"
+          class="form-control form-control-sm"
+          style="width: 4.5rem"
+          aria-label="Goli Rumeni"
+          [(ngModel)]="scoreDraft.rumeni"
+        />
+        <span>:</span>
+        <input
+          type="number"
+          name="scoreRdeci"
+          min="0"
+          max="99"
+          step="1"
+          class="form-control form-control-sm"
+          style="width: 4.5rem"
+          aria-label="Goli Rdeči"
+          [(ngModel)]="scoreDraft.rdeci"
+        />
+        <span class="team-dot" [style.background]="teamsMeta[1].color"></span>
+        <button type="submit" class="btn btn-sm btn-primary m-0" [disabled]="!isConnected()">
+          Shrani rezultat
+        </button>
+        <button
+          *ngIf="event.score"
+          type="button"
+          class="btn btn-sm btn-link m-0"
+          (click)="clearScore()"
+        >
+          Odstrani rezultat
+        </button>
+      </form>
+      <button type="button" class="btn btn-sm btn-link text-danger px-0 mt-2" (click)="clearSaved()">
+        Odstrani shranjene ekipe
+      </button>
+    </ng-container>
+  </div>
+</div>

@@ -7,7 +7,7 @@ import {
 } from "@angular/common/http";
 import { Observable, throwError } from "rxjs";
 import { catchError, retry } from "rxjs/operators";
-import { Event } from "../classes/event";
+import { Event, Score, Teams } from "../classes/event";
 import { User } from "../classes/user";
 import { AuthResponse } from "../classes/auth-response";
 import { BROWSER_STORAGE } from "../classes/storage";
@@ -99,6 +99,75 @@ export class DemoDataService {
   }
 
   /**
+   * Saves the team line-up (admin); teams are sent as JSON
+   */
+  public saveTeams(eventId: string, teams: Teams): Observable<Event> {
+    const url: string = `${this.apiUrl}/events/${eventId}/teams`;
+    return this.http
+      .put<Event>(url, teams, { headers: this.headers(true, true) })
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Removes the saved teams and the score (admin)
+   */
+  public clearTeams(eventId: string): Observable<Event> {
+    const url: string = `${this.apiUrl}/events/${eventId}/teams`;
+    return this.http
+      .delete<Event>(url, { headers: this.headers(true) })
+      .pipe(catchError(this.handleError));
+  }
+
+  public saveScore(eventId: string, score: Score): Observable<Event> {
+    const url: string = `${this.apiUrl}/events/${eventId}/score`;
+    const body = new HttpParams()
+      .set("rumeni", score.rumeni)
+      .set("rdeci", score.rdeci);
+    return this.http
+      .put<Event>(url, body, { headers: this.headers(true) })
+      .pipe(catchError(this.handleError));
+  }
+
+  public clearScore(eventId: string): Observable<Event> {
+    const url: string = `${this.apiUrl}/events/${eventId}/score`;
+    return this.http
+      .delete<Event>(url, { headers: this.headers(true) })
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Requests a reset email; the response is the same whether or not the account exists
+   */
+  public forgotPassword(email: string): Observable<{ message: string }> {
+    const url: string = `${this.apiUrl}/password/forgot`;
+    const body = new HttpParams().set("email", email);
+    return this.http
+      .post<{ message: string }>(url, body, { headers: this.headers(false) })
+      .pipe(catchError(this.handleError));
+  }
+
+  public resetPassword(token: string, newPassword: string): Observable<AuthResponse> {
+    const url: string = `${this.apiUrl}/password/reset`;
+    const body = new HttpParams().set("token", token).set("newPassword", newPassword);
+    return this.http
+      .post<AuthResponse>(url, body, { headers: this.headers(false) })
+      .pipe(catchError(this.handleError));
+  }
+
+  public changePassword(
+    currentPassword: string,
+    newPassword: string
+  ): Observable<unknown> {
+    const url: string = `${this.apiUrl}/me/password`;
+    const body = new HttpParams()
+      .set("currentPassword", currentPassword)
+      .set("newPassword", newPassword);
+    return this.http
+      .put(url, body, { headers: this.headers(true) })
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
    * Changes the answer and/or note; an empty note removes it
    */
   public updateSignup(
@@ -180,10 +249,10 @@ export class DemoDataService {
       .pipe(catchError(this.handleError));
   }
 
-  private headers(withAuth: boolean): HttpHeaders {
+  private headers(withAuth: boolean, json = false): HttpHeaders {
     let headers = new HttpHeaders().set(
       "Content-Type",
-      "application/x-www-form-urlencoded"
+      json ? "application/json" : "application/x-www-form-urlencoded"
     );
     if (withAuth)
       headers = headers.set(

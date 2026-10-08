@@ -24,6 +24,7 @@ import {
 import { eventToIcs } from "../../classes/calendar";
 import { AuthenticationService } from "../../services/authentication.service";
 import { ConnectionService } from "../../services/connection.service";
+import { ShareService } from "../../services/share.service";
 import { User } from "../../classes/user";
 import { Signup } from "../../classes/signup";
 import { PlayerStats } from "../../classes/player-stats";
@@ -44,6 +45,7 @@ export class EventDetailsComponent implements OnInit, OnChanges {
     private authenticationService: AuthenticationService,
     private connectionService: ConnectionService,
     private modalService: BsModalService,
+    private shareService: ShareService,
     private router: Router
   ) {}
 
@@ -54,7 +56,6 @@ export class EventDetailsComponent implements OnInit, OnChanges {
   protected errorMessage = "";
   protected infoMessage = "";
   protected formError = "";
-  protected teams: [string[], string[]] | null = null;
   protected noteDraft = "";
   protected guestName = "";
   protected readonly noteMaxLength = NOTE_MAX_LENGTH;
@@ -296,9 +297,8 @@ export class EventDetailsComponent implements OnInit, OnChanges {
     });
   }
 
-  private applyEventUpdate(updated: Event): void {
+  protected applyEventUpdate(updated: Event): void {
     this.event = updated;
-    this.teams = null;
     this.eventChange.emit(updated);
   }
 
@@ -344,37 +344,17 @@ export class EventDetailsComponent implements OnInit, OnChanges {
   }
 
   /**
-   * Shares text plus the page link via the device share sheet (e.g. WhatsApp),
-   * or copies it to the clipboard where sharing isn't supported
+   * Shares text plus the page link (share sheet, or clipboard as a fallback)
    */
   private async shareText(text: string): Promise<void> {
     this.clearMessages();
-    const url = window.location.href;
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: this.event.name, text, url });
-      } else {
-        await navigator.clipboard.writeText(`${text} ${url}`);
-        this.infoMessage = "Povezava je kopirana v odložišče.";
-      }
-    } catch (err) {
-      // Closing the share sheet rejects with AbortError, which is not an error for the user
-      if ((err as DOMException)?.name !== "AbortError")
-        this.errorMessage = "Deljenje ni uspelo.";
-    }
-  }
-
-  /**
-   * Randomly splits confirmed players (not the waitlist) into two teams of (almost) equal size
-   */
-  protected generateTeams(): void {
-    const players = confirmedSignups(this.event).map((signup) => signup.name);
-    for (let i = players.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [players[i], players[j]] = [players[j], players[i]];
-    }
-    const half = Math.ceil(players.length / 2);
-    this.teams = [players.slice(0, half), players.slice(half)];
+    const result = await this.shareService.share(
+      this.event.name,
+      text,
+      window.location.href
+    );
+    if (result === "copied") this.infoMessage = "Povezava je kopirana v odložišče.";
+    if (result === "failed") this.errorMessage = "Deljenje ni uspelo.";
   }
 
   /**
@@ -392,11 +372,11 @@ export class EventDetailsComponent implements OnInit, OnChanges {
   }
 
   /**
-   * Teams are cleared whenever signups change, so they never list stale players
+   * Replaces the event object (not just its signups), so child components such as
+   * the teams card notice the change and drop stale previews
    */
   private setSignups(signups: Signup[]): void {
-    this.event.signedup = signups;
-    this.teams = null;
+    this.event = { ...this.event, signedup: signups };
   }
 
   /**

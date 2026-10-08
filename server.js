@@ -36,6 +36,10 @@ const swaggerDocument = swaggerJsDoc({
         description: "<b>User management</b> and authentication.",
       },
       {
+        name: "Teams",
+        description: "Saved teams (Rumeni / Rdeči) and match score.",
+      },
+      {
         name: "Season",
         description: "Season membership fees (October to April).",
       },

@@ -32,6 +32,9 @@ const MAX_PLAYERS = 1000;
                     Udeležba
                   </th>
                   <th class="text-end" title="Zaporedne zadnje tekme">Niz</th>
+                  <th class="text-end text-nowrap" title="Zmage - neodločeno - porazi (tekme z vpisanim rezultatom)">
+                    Z-N-P
+                  </th>
                   <th class="text-end pe-3">Zadnjič</th>
                 </tr>
               </thead>
@@ -67,6 +70,13 @@ const MAX_PLAYERS = 1000;
                     </ng-container>
                     <ng-template #noStreak>–</ng-template>
                   </td>
+                  <td class="text-end text-nowrap">
+                    {{
+                      player.wins + player.draws + player.losses > 0
+                        ? player.wins + "-" + player.draws + "-" + player.losses
+                        : "–"
+                    }}
+                  </td>
                   <td class="text-end pe-3 text-nowrap">
                     {{
                       player.lastPlayed
@@ -81,7 +91,8 @@ const MAX_PLAYERS = 1000;
         </div>
         <p class="text-secondary small mt-2">
           Štejejo samo pretekli, neodpovedani dogodki, kjer si bil potrjen igralec
-          (ne rezerva). Udeležba se računa od tvoje prve prijave naprej.
+          (ne rezerva). Udeležba se računa od tvoje prve prijave naprej. Z-N-P
+          (zmage, neodločeno, porazi) šteje tekme s shranjenimi ekipami in rezultatom.
         </p>
       </div>
     </div>`,

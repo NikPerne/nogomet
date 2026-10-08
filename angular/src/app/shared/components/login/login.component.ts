@@ -55,6 +55,9 @@ import { ConnectionService } from "../../services/connection.service";
             >
               <i class="fa-regular fa-circle-check pe-2"></i>Login
             </button>
+            <a routerLink="/pozabljeno-geslo" class="link-primary small ms-2"
+              >Pozabljeno geslo?</a
+            >
           </div>
         </form>
       </div>

@@ -26,6 +26,10 @@ import { MostRecentSignupPipe } from './shared/pipes/most-recent-signup.pipe';
 import { EventFormComponent } from './shared/components/event-form/event-form.component';
 import { LeaderboardComponent } from './shared/components/leaderboard/leaderboard.component';
 import { SeasonComponent } from './shared/components/season/season.component';
+import { EventTeamsComponent } from './shared/components/event-teams/event-teams.component';
+import { ProfileComponent } from './shared/components/profile/profile.component';
+import { ForgotPasswordComponent } from './shared/components/forgot-password/forgot-password.component';
+import { ResetPasswordComponent } from './shared/components/reset-password/reset-password.component';
 
 @NgModule({
   declarations: [
@@ -44,6 +48,10 @@ import { SeasonComponent } from './shared/components/season/season.component';
     EventFormComponent,
     LeaderboardComponent,
     SeasonComponent,
+    EventTeamsComponent,
+    ProfileComponent,
+    ForgotPasswordComponent,
+    ResetPasswordComponent,
   ],
   imports: [
     BrowserModule,

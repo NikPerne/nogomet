@@ -83,6 +83,12 @@
             >
             <a
               *ngIf="isLoggedIn()"
+              routerLink="/profil"
+              class="dropdown-item show-pointer"
+              >Moj profil</a
+            >
+            <a
+              *ngIf="isLoggedIn()"
               (click)="logout()"
               class="dropdown-item show-pointer"
               >Logout</a
