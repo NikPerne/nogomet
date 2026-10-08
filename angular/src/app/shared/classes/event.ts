@@ -109,7 +109,7 @@ export const isEventFull = (event: Event): boolean =>
 /**
  * Start time suggested for new events and for older events without a time
  */
-export const DEFAULT_EVENT_TIME = "20:00";
+export const DEFAULT_EVENT_TIME = "18:00";
 
 /**
  * Events created before times were added are stored at local midnight

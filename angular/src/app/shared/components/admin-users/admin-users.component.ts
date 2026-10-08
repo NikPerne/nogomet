@@ -21,6 +21,28 @@ import { Account } from "../../classes/account";
           <div class="alert alert-dark mt-4 p-2" [hidden]="!message">
             <i class="fa-solid fa-triangle-exclamation pe-2"></i>{{ message }}
           </div>
+          @if (inviteLoaded) {
+            <div class="card mt-4">
+              <div class="card-body py-2 d-flex flex-wrap align-items-center gap-2">
+                <i class="fa-solid fa-key"></i>
+                @if (inviteCode) {
+                  <span>Koda za registracijo: <b class="user-select-all">{{ inviteCode }}</b></span>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-secondary m-0"
+                    (click)="copyInviteCode()"
+                  >
+                    <i class="fa-regular fa-copy me-1"></i>{{ copied ? "Kopirano" : "Kopiraj" }}
+                  </button>
+                } @else {
+                  <span class="text-secondary"
+                    >Registracija je odprta za vse. Za kodo nastavi <code>REGISTRATION_CODE</code> na
+                    strežniku.</span
+                  >
+                }
+              </div>
+            </div>
+          }
           <input
             type="search"
             class="form-control form-control-sm mt-4"
@@ -110,8 +132,30 @@ export class AdminUsersComponent implements OnInit {
   /** IDs of users with a request in progress */
   protected busy = new Set<string>();
 
+  protected inviteCode: string | null = null;
+  protected inviteLoaded = false;
+  protected copied = false;
+
   ngOnInit(): void {
-    if (this.isAdmin()) this.load();
+    if (!this.isAdmin()) return;
+    this.load();
+    this.demoDataService.getInviteCode().subscribe({
+      next: ({ inviteCode }) => {
+        this.inviteCode = inviteCode;
+        this.inviteLoaded = true;
+      },
+      error: () => (this.inviteLoaded = false),
+    });
+  }
+
+  protected async copyInviteCode(): Promise<void> {
+    if (!this.inviteCode) return;
+    try {
+      await navigator.clipboard.writeText(this.inviteCode);
+      this.copied = true;
+    } catch {
+      // Clipboard can be blocked; the code is selectable with one click instead
+    }
   }
 
   private load(messageAfterLoad = ""): void {

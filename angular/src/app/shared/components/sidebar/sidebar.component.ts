@@ -1,12 +1,15 @@
-import { Component, Input, OnInit, ChangeDetectionStrategy } from "@angular/core";
+import { Component, Input, OnInit, ChangeDetectionStrategy, effect } from "@angular/core";
 import {
   ApexAxisChartSeries,
   ApexChart,
   ApexDataLabels,
   ApexXAxis,
-  ApexPlotOptions
+  ApexPlotOptions,
+  ApexTheme,
 } from "ng-apexcharts";
 import { DemoDataService } from "../../services/demo-data.service";
+import { ThemeService } from "../../services/theme.service";
+import { VENUE } from "../../classes/venue";
 
 export type ChartOptions = {
   series: ApexAxisChartSeries;
@@ -14,29 +17,24 @@ export type ChartOptions = {
   dataLabels: ApexDataLabels;
   plotOptions: ApexPlotOptions;
   xaxis: ApexXAxis;
+  theme: ApexTheme;
 };
 
 @Component({
     selector: "app-sidebar",
-    template: `<apx-chart [series]="chartOptions.series" [chart]="chartOptions.chart"[dataLabels]="chartOptions.dataLabels" [plotOptions]="chartOptions.plotOptions"[xaxis]="chartOptions.xaxis"></apx-chart><br><br><div class="ratio ratio-4x3">
+    template: `<apx-chart [series]="chartOptions.series" [chart]="chartOptions.chart" [dataLabels]="chartOptions.dataLabels" [plotOptions]="chartOptions.plotOptions" [xaxis]="chartOptions.xaxis" [theme]="chartOptions.theme"></apx-chart><br><br><div class="ratio ratio-4x3">
   <div>
   <h4 class="mt-1 mb-1">
   <a
     class="link-primary text-decoration-none"
     ><i class="fa-solid fa-futbol me-2"></i
-    >Kje se nahaja? PROšport Stražišče Kranj</a
+    >Kje se nahaja? {{ venue.name }}</a
   >
 </h4>
   </div>
   <iframe
-    title="Zamljevid"
-    [src]="
-      'https://maps.google.com/maps?q=' +
-        46.232536 +
-        ',' +
-        14.34166 +
-        '&z=15&output=embed' | allowUrl
-    "
+    title="Zemljevid"
+    [src]="mapUrl | allowUrl"
     class="rounded-3"
   ></iframe>
 </div>`,
@@ -47,6 +45,9 @@ export type ChartOptions = {
 export class SidebarComponent implements OnInit {
   @Input() content: string = "";
 
+  protected readonly venue = VENUE;
+  protected readonly mapUrl = `https://maps.google.com/maps?q=${VENUE.latitude},${VENUE.longitude}&z=15&output=embed`;
+
   chartOptions: ChartOptions = {
     series: [{
       name: "Odigranih tekem",
@@ -56,6 +57,8 @@ export class SidebarComponent implements OnInit {
       type: "bar",
       height: 260,
       width: 300,
+      // Transparent, so the card colour shows through in dark mode
+      background: "transparent",
     },
     plotOptions: {
       bar: {
@@ -69,9 +72,18 @@ export class SidebarComponent implements OnInit {
       categories: [],
       decimalsInFloat: 0,
     },
+    theme: { mode: "light" },
   };
 
-  constructor(private demoDataService: DemoDataService) {}
+  constructor(private demoDataService: DemoDataService, themeService: ThemeService) {
+    // Chart text and grid colours follow the device's light/dark setting
+    effect(() => {
+      this.chartOptions = {
+        ...this.chartOptions,
+        theme: { mode: themeService.isDark() ? "dark" : "light" },
+      };
+    });
+  }
 
   ngOnInit() {
     this.loadStats();

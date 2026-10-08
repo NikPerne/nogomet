@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const User = mongoose.model("User");
 const Event = mongoose.model("Event");
-const { parseLimit, isOwnSignup } = require("./helpers");
+const { parseLimit, isOwnSignup, isValidId } = require("./helpers");
 const { parseSeason } = require("../config/season");
 
 /**
@@ -114,6 +114,72 @@ const userList = async (req, res) => {
   }
 };
 
+/**
+ * @openapi
+ * /users/{userId}:
+ *   get:
+ *     summary: One player's statistics and match history
+ *     description: >
+ *       All-time statistics (as in /users) plus every started, non-cancelled event the player
+ *       answered, newest first: status (played, waitlisted or declined), team, result, score
+ *       and whether they were player of the match.
+ *     tags: [Authentication]
+ *     security:
+ *      - jwt: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         schema:
+ *           type: string
+ *     responses:
+ *       '200':
+ *         description: "{ player, matches }"
+ *       '401':
+ *         description: Not authenticated
+ *       '404':
+ *         description: User not found
+ *       '500':
+ *         description: Internal server error
+ */
+const playerHistory = async (req, res) => {
+  const { userId } = req.params;
+  const notFound = () =>
+    res.status(404).json({ message: `User with id '${userId}' not found.` });
+  if (!isValidId(userId)) return notFound();
+  try {
+    const [user, events] = await Promise.all([
+      User.findById(userId).select("name").exec(),
+      Event.find({ date: { $lt: new Date() }, cancelled: { $ne: true } })
+        .select("name date maxPlayers signedup teams score mvpVotes")
+        .sort({ date: 1 })
+        .exec(),
+    ]);
+    if (!user) return notFound();
+    const userKeys = [user._id.toString(), `name:${user.name}`];
+    const matches = events
+      .filter((event) => event.signedup.some((signup) => isOwnSignup(signup, user)))
+      .map((event) => {
+        const own = event.signedup.find((signup) => isOwnSignup(signup, user));
+        const played = event.confirmedSignups().some((signup) => isOwnSignup(signup, user));
+        return {
+          _id: event._id,
+          name: event.name,
+          date: event.date,
+          status: played ? "played" : own.attending ? "waitlisted" : "declined",
+          team: event.teamOf(user) ?? null,
+          result: event.resultFor(user) ?? null,
+          score: event.score ?? null,
+          mvp: event.mvpWinnerKeys().some((key) => userKeys.includes(key)),
+        };
+      })
+      .reverse();
+    res.status(200).json({ player: playerStats(user, events), matches });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
   userList,
+  playerHistory,
 };

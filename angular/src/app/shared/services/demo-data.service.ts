@@ -11,6 +11,7 @@ import { Signup } from "../classes/signup";
 import { PlayerStats } from "../classes/player-stats";
 import { SeasonOverview } from "../classes/season";
 import { Account } from "../classes/account";
+import { PlayerHistory } from "../classes/player-stats";
 
 /** The current user's player-of-the-match vote status for an event */
 export interface MvpStatus {
@@ -35,8 +36,59 @@ export class DemoDataService {
     return this.makeAuthApiCall("login", user);
   }
 
-  public register(user: User): Observable<AuthResponse> {
-    return this.makeAuthApiCall("register", user);
+  public register(user: User, inviteCode?: string): Observable<AuthResponse> {
+    return this.makeAuthApiCall("register", user, inviteCode);
+  }
+
+  /**
+   * Whether registering requires an invite code
+   */
+  public getRegistrationInfo(): Observable<{ inviteCodeRequired: boolean }> {
+    const url: string = `${this.apiUrl}/registration`;
+    return this.http
+      .get<{ inviteCodeRequired: boolean }>(url)
+      .pipe(retry(1), catchError(this.handleError));
+  }
+
+  /**
+   * The registration invite code (admins only); null when registration is open
+   */
+  public getInviteCode(): Observable<{ inviteCode: string | null }> {
+    const url: string = `${this.apiUrl}/admin/invite-code`;
+    return this.http
+      .get<{ inviteCode: string | null }>(url, { headers: this.headers(true) })
+      .pipe(retry(1), catchError(this.handleError));
+  }
+
+  /**
+   * One player's statistics and match history
+   */
+  public getPlayerHistory(userId: string): Observable<PlayerHistory> {
+    const url: string = `${this.apiUrl}/users/${userId}`;
+    return this.http
+      .get<PlayerHistory>(url, { headers: this.headers(true) })
+      .pipe(retry(1), catchError(this.handleError));
+  }
+
+  public getPushPublicKey(): Observable<{ publicKey: string }> {
+    const url: string = `${this.apiUrl}/push/public-key`;
+    return this.http
+      .get<{ publicKey: string }>(url)
+      .pipe(catchError(this.handleError));
+  }
+
+  public savePushSubscription(subscription: PushSubscriptionJSON): Observable<unknown> {
+    const url: string = `${this.apiUrl}/push/subscriptions`;
+    return this.http
+      .post(url, subscription, { headers: this.headers(true, true) })
+      .pipe(catchError(this.handleError));
+  }
+
+  public deletePushSubscription(endpoint: string): Observable<unknown> {
+    const url: string = `${this.apiUrl}/push/subscriptions`;
+    return this.http
+      .delete(url, { headers: this.headers(true, true), body: { endpoint } })
+      .pipe(catchError(this.handleError));
   }
 
   /**
@@ -303,11 +355,13 @@ export class DemoDataService {
 
   private makeAuthApiCall(
     urlPath: string,
-    user: User
+    user: User,
+    inviteCode?: string
   ): Observable<AuthResponse> {
     const url: string = `${this.apiUrl}/${urlPath}`;
     let body = new HttpParams().set("email", user.email).set("name", user.name);
     if (user.password) body = body.set("password", user.password);
+    if (inviteCode) body = body.set("inviteCode", inviteCode);
     return this.http
       .post<AuthResponse>(url, body, { headers: this.headers(false) })
       .pipe(catchError(this.handleError));

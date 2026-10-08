@@ -2,9 +2,9 @@ const mongoose = require("mongoose");
 const User = mongoose.model("User");
 const Event = mongoose.model("Event");
 const { sendMail, appUrl, escapeHtml } = require("../config/mail");
+const { sendPushToUsers } = require("../config/push");
 const { isOwnSignup } = require("../controllers/helpers");
-
-const TIME_ZONE = "Europe/Ljubljana";
+const { TIME_ZONE } = require("./time");
 
 /**
  * Reminders go out for events starting within this many hours (default 30, so a daily run
@@ -25,7 +25,7 @@ const hasTimeOfDay = (date) =>
   }).format(date) !== "00:00";
 
 /**
- * e.g. "torek, 14. oktober 2026 ob 20:00" in Ljubljana time
+ * e.g. "torek, 14. oktober 2026 ob 18:00" in Ljubljana time
  */
 const formatWhen = (date) => {
   const day = new Intl.DateTimeFormat("sl-SI", {
@@ -47,12 +47,12 @@ const formatWhen = (date) => {
 const eventLink = (event) => `${appUrl()}/events/${event._id}`;
 
 /**
- * Sends one email per user, one after another; failures are logged and skipped.
- * Returns how many emails were handed to the mail service.
+ * Sends one email per user who hasn't turned email notifications off, one after another;
+ * failures are logged and skipped. Returns how many emails were handed to the mail service.
  */
 const sendToEach = async (users, buildMail) => {
   let sent = 0;
-  for (const user of users) {
+  for (const user of users.filter((u) => u.emailNotifications !== false)) {
     try {
       await sendMail({ to: user.email, toName: user.name, ...buildMail(user) });
       sent++;
@@ -69,7 +69,8 @@ const footer = {
 };
 
 /**
- * Emails everyone who said "Pridem" (not guests) that the event was cancelled
+ * Tells everyone who said "Pridem" (not guests) that the event was cancelled: by email
+ * (unless turned off) and by push to their subscribed devices
  */
 const notifyCancellation = async (event) => {
   const attending = event.signedup.filter((signup) => signup.attending && !signup.guestOf);
@@ -79,9 +80,8 @@ const notifyCancellation = async (event) => {
       { _id: { $in: attending.filter((s) => s.userId).map((s) => s.userId) } },
       { name: { $in: attending.filter((s) => !s.userId).map((s) => s.name) } },
     ],
-    emailNotifications: { $ne: false },
   })
-    .select("name email")
+    .select("name email emailNotifications")
     .exec();
   const recipients = candidates.filter((user) =>
     attending.some((signup) => isOwnSignup(signup, user))
@@ -102,14 +102,22 @@ const notifyCancellation = async (event) => {
       `<p><a href="${link}">Odpri dogodek</a></p>` +
       footer.html,
   }));
-  console.log(`Cancellation: ${sent} email(s) sent for event ${event._id}.`);
+  const pushed = await sendPushToUsers(
+    recipients.map((user) => user._id),
+    {
+      title: `Odpovedano: ${event.name}`,
+      body: `${when}${event.cancelReason ? ` – ${event.cancelReason}` : ""}`,
+      url: `/events/${event._id}`,
+    }
+  );
+  console.log(`Cancellation: ${sent} email(s), ${pushed} push(es) for event ${event._id}.`);
   return sent;
 };
 
 /**
  * For upcoming events (within the reminder window, not cancelled, not yet reminded),
- * emails regulars - users who played at least one past game - who haven't answered.
- * Returns { events, emailsSent }.
+ * reminds regulars - users who played at least one past game - who haven't answered:
+ * by email (unless turned off) and by push. Returns { events, emailsSent, pushesSent }.
  */
 const sendReminders = async () => {
   const now = Date.now();
@@ -118,10 +126,10 @@ const sendReminders = async () => {
     cancelled: { $ne: true },
     remindersSentAt: { $exists: false },
   }).exec();
-  if (events.length === 0) return { events: 0, emailsSent: 0 };
+  if (events.length === 0) return { events: 0, emailsSent: 0, pushesSent: 0 };
 
   const [users, pastEvents] = await Promise.all([
-    User.find({ emailNotifications: { $ne: false } }).select("name email").exec(),
+    User.find().select("name email emailNotifications").exec(),
     Event.find({ date: { $lt: new Date(now) }, cancelled: { $ne: true } })
       .select("date maxPlayers signedup")
       .exec(),
@@ -133,6 +141,7 @@ const sendReminders = async () => {
   );
 
   let emailsSent = 0;
+  let pushesSent = 0;
   for (const event of events) {
     // Marked first, so an overlapping run can't send the same reminders twice
     await Event.updateOne({ _id: event._id }, { $set: { remindersSentAt: new Date() } }).exec();
@@ -157,9 +166,17 @@ const sendReminders = async () => {
         `<p><a href="${link}">Pridem / Ne pridem</a></p>` +
         footer.html,
     }));
+    pushesSent += await sendPushToUsers(
+      recipients.map((user) => user._id),
+      {
+        title: `Prideš? ${event.name}`,
+        body: `${when} · prijavljenih ${count}`,
+        url: `/events/${event._id}`,
+      }
+    );
     console.log(`Reminders: ${recipients.length} recipient(s) for event ${event._id}.`);
   }
-  return { events: events.length, emailsSent };
+  return { events: events.length, emailsSent, pushesSent };
 };
 
 module.exports = { notifyCancellation, sendReminders, formatWhen };

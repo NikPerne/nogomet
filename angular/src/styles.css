@@ -2,10 +2,11 @@
   cursor: pointer;
 }
 
+/* Theme colours, so "Pridem" / "Ne pridem" stay readable in light and dark mode */
 .pridem-text {
-  color: green; /* Change this to whatever color you want for pridem */
+  color: var(--bs-success-text-emphasis);
 }
 
 .nepridem-text {
-  color: red; /* Change this to whatever color you want for ne pridem */
+  color: var(--bs-danger-text-emphasis);
 }

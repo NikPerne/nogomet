@@ -2,13 +2,46 @@ const passport = require("passport");
 const mongoose = require("mongoose");
 const User = mongoose.model("User");
 const { sendMail, appUrl, escapeHtml } = require("../config/mail");
+const { inviteCode, matchesInviteCode } = require("../config/registration");
+
+/**
+ * @openapi
+ * /registration:
+ *  get:
+ *   summary: Whether registering requires an invite code
+ *   tags: [Authentication]
+ *   responses:
+ *    '200':
+ *     description: "{ inviteCodeRequired }"
+ */
+const registrationInfo = (req, res) =>
+  res.status(200).json({ inviteCodeRequired: !!inviteCode() });
+
+/**
+ * @openapi
+ * /admin/invite-code:
+ *  get:
+ *   summary: The current registration invite code (administrators only)
+ *   tags: [Admin]
+ *   security:
+ *    - jwt: []
+ *   responses:
+ *    '200':
+ *     description: "{ inviteCode } (null when registration is open)"
+ *    '403':
+ *     description: Not an administrator
+ */
+const inviteCodeForAdmin = (req, res) =>
+  res.status(200).json({ inviteCode: inviteCode() });
 
 /**
  * @openapi
  * /register:
  *  post:
  *   summary: Register a new user
- *   description: <b>Register a new user</b> with name, email and password.
+ *   description: >
+ *    <b>Register a new user</b> with name, email and password. When the server has an invite
+ *    code (REGISTRATION_CODE), inviteCode is also required (case-insensitive); see GET /registration.
  *   tags: [Authentication]
  *   requestBody:
  *    description: User object
@@ -32,6 +65,14 @@ const { sendMail, appUrl, escapeHtml } = require("../config/mail");
  *        $ref: '#/components/schemas/ErrorMessage'
  *       example:
  *        message: All fields required.
+ *    '403':
+ *     description: <b>Forbidden</b>, invite code missing or wrong.
+ *     content:
+ *      application/json:
+ *       schema:
+ *        $ref: '#/components/schemas/ErrorMessage'
+ *       example:
+ *        message: Invalid invite code.
  *    '409':
  *     description: <b>Conflict</b>, with error message.
  *     content:
@@ -52,6 +93,8 @@ const { sendMail, appUrl, escapeHtml } = require("../config/mail");
 const register = async (req, res) => {
   if (!req.body.name || !req.body.email || !req.body.password)
     return res.status(400).json({ message: "All fields required." });
+  if (!matchesInviteCode(req.body.inviteCode))
+    return res.status(403).json({ message: "Invalid invite code." });
   const user = new User();
   user.name = req.body.name;
   user.email = req.body.email;
@@ -329,6 +372,8 @@ const resetPassword = async (req, res) => {
 };
 
 module.exports = {
+  registrationInfo,
+  inviteCodeForAdmin,
   register,
   login,
   changePassword,

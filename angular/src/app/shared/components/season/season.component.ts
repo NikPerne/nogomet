@@ -91,7 +91,9 @@ import { SeasonOverview, SeasonPlayer, shiftSeason } from "../../classes/season"
                             [ngClass]="{ 'table-success': isCurrentUser(player) }"
                             >
                             <td class="ps-3">
-                              {{ player.name }}
+                              <a [routerLink]="['/igralec', player._id]" class="link-body-emphasis">{{
+                                player.name
+                              }}</a>
                               @if (isCurrentUser(player)) {
                                 <small class="text-secondary">(ti)</small>
                               }

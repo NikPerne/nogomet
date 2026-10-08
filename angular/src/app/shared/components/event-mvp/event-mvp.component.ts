@@ -27,7 +27,7 @@ import { Signup } from "../../classes/signup";
     selector: "app-event-mvp",
     template: `@if (visible) {
   <div class="card mt-4">
-    <div class="card-header bg-light">
+    <div class="card-header bg-body-tertiary">
       <h5 class="mt-1 mb-1">
         <i class="fa-solid fa-trophy text-warning pe-2"></i>Igralec tekme
       </h5>

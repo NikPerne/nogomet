@@ -2,7 +2,7 @@
   <div class="row">
     <div [ngClass]="{ 'col-12': true, 'col-md-4': isConnected() }">
       <div class="card mt-4">
-        <div class="card-header bg-light">
+        <div class="card-header bg-body-tertiary">
           <div class="d-flex justify-content-between align-items-center">
             <h4 class="mt-1 mb-1"><i class="fa-regular fa-file-lines pe-2"></i>Nogomet</h4>
             @if (isAdmin()) {
@@ -49,6 +49,7 @@
                   <i class="fa-regular fa-clock ms-2 me-1"></i>{{ event.date | date: "HH:mm" }}
                 }
               </p>
+              <app-event-weather [event]="event"></app-event-weather>
             </div>
             <div class="d-flex flex-wrap align-items-center">
               <span
@@ -93,7 +94,7 @@
       <app-event-mvp [event]="event" (eventChange)="applyEventUpdate($event)"></app-event-mvp>
       @if (notResponded.length > 0) {
         <div class="card mt-4">
-          <div class="card-header bg-light">
+          <div class="card-header bg-body-tertiary">
             <div class="d-flex justify-content-between align-items-center">
               <h5 class="mt-1 mb-1">
                 <i class="fa-regular fa-bell pe-2"></i>Še niso odgovorili ({{
@@ -116,7 +117,7 @@
     </div>
     <div class="col-12 col-md-4">
       <div class="card mt-4">
-        <div class="card-header bg-light">
+        <div class="card-header bg-body-tertiary">
           <div class="d-flex justify-content-between align-items-center">
             <div>
               <h4 id="signup" class="mt-1 mb-1">
@@ -130,10 +131,17 @@
             <div>No SignUps yet, please add yours.</div>
           }
           @for (signup of event.signedup | mostRecentSignup; track signup; let first = $first) {
-            <div class="bg-light rounded-3 px-2 py-1" [ngClass]="{ 'mt-2': !first }">
+            <div class="bg-body-tertiary rounded-3 px-2 py-1" [ngClass]="{ 'mt-2': !first }">
               <div class="d-flex justify-content-between align-items-start gap-2">
                 <div id="author" class="text-break" style="min-width: 0">
-                  <i class="fa-regular fa-user pe-1"></i>{{ signup.name }}
+                  <i class="fa-regular fa-user pe-1"></i>
+                  @if (signup.userId) {
+                    <a [routerLink]="['/igralec', signup.userId]" class="link-body-emphasis">{{
+                      signup.name
+                    }}</a>
+                  } @else {
+                    {{ signup.name }}
+                  }
                   @if (signup.guestOf) {
                     <span
                       class="badge bg-info text-dark ms-1"

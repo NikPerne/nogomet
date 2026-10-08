@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const User = mongoose.model("User");
 const SeasonPayment = mongoose.model("SeasonPayment");
+const PushSubscription = mongoose.model("PushSubscription");
 const { isValidId, parseBoolean } = require("./helpers");
 const { accountJson } = require("./account");
 
@@ -72,7 +73,7 @@ const listUsers = async (req, res) => {
  *   delete:
  *     summary: Delete a user account (administrators only)
  *     description: >
- *       Also deletes the user's season payments. Their past signups stay on events (under the
+ *       Also deletes the user's season payments and push subscriptions. Their past signups stay on events (under the
  *       same name) but no longer count in statistics. Admins can't delete their own account.
  *     tags: [Admin]
  *     security:
@@ -118,6 +119,7 @@ const deleteUser = async (req, res) => {
     const user = await User.findByIdAndDelete(userId).exec();
     if (!user) return userNotFound(res, userId);
     await SeasonPayment.deleteMany({ userId }).exec();
+    await PushSubscription.deleteMany({ userId }).exec();
     res.status(204).send();
   } catch (err) {
     res.status(500).json({ message: err.message });

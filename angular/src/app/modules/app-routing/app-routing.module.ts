@@ -14,11 +14,13 @@ import { ProfileComponent } from "../../shared/components/profile/profile.compon
 import { ForgotPasswordComponent } from "../../shared/components/forgot-password/forgot-password.component";
 import { ResetPasswordComponent } from "../../shared/components/reset-password/reset-password.component";
 import { AdminUsersComponent } from "../../shared/components/admin-users/admin-users.component";
+import { PlayerComponent } from "../../shared/components/player/player.component";
 
 const routes: Routes = [
   { path: "", component: HomepageComponent, canActivate: [AuthGuard]},
   { path: "events", component: EventListComponent, canActivate: [AuthGuard]},
   { path: "lestvica", component: LeaderboardComponent, canActivate: [AuthGuard]},
+  { path: "igralec/:userId", component: PlayerComponent, canActivate: [AuthGuard]},
   { path: "clanarina", component: SeasonComponent, canActivate: [AuthGuard]},
   { path: "about", component: AboutComponent },
   { path: "events/:eventId", component: DetailsPageEventsComponent, canActivate: [AuthGuard]},

@@ -1,5 +1,7 @@
-import { Component, OnInit, ChangeDetectionStrategy } from "@angular/core";
+import { Component, OnInit, ChangeDetectionStrategy, DestroyRef } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { DemoDataService } from "../../services/demo-data.service";
+import { PushService } from "../../services/push.service";
 import { AuthenticationService } from "../../services/authentication.service";
 import { ConnectionService } from "../../services/connection.service";
 import { PlayerStats } from "../../classes/player-stats";
@@ -18,7 +20,7 @@ const MAX_PLAYERS_LOADED = 1000;
       <div class="row">
         <div class="col-12 col-lg-6">
           <div class="card mt-4">
-            <div class="card-header bg-light">
+            <div class="card-header bg-body-tertiary">
               <h4 class="mt-1 mb-1"><i class="fa-regular fa-user pe-2"></i>{{ user.name }}</h4>
             </div>
             <div class="card-body">
@@ -72,6 +74,33 @@ const MAX_PLAYERS_LOADED = 1000;
                     </label>
                   </div>
                 }
+                @if (pushSupported) {
+                  <div class="form-check form-switch mt-2">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      role="switch"
+                      id="pushNotifications"
+                      [checked]="pushEnabled"
+                      [disabled]="savingPush || !isConnected() || pushPermission === 'denied'"
+                      (change)="togglePush()"
+                    />
+                    <label class="form-check-label" for="pushNotifications">
+                      <i class="fa-solid fa-mobile-screen me-1"></i>Obvestila na tej napravi
+                      (ista obvestila kot po e-pošti)
+                    </label>
+                  </div>
+                  @if (pushPermission === "denied") {
+                    <small class="text-secondary d-block">
+                      Obvestila so v brskalniku blokirana. Dovoli jih v nastavitvah brskalnika za to stran.
+                    </small>
+                  }
+                } @else {
+                  <small class="text-secondary d-block mt-2">
+                    <i class="fa-solid fa-mobile-screen me-1"></i>Obvestila na napravi tukaj niso na voljo.
+                    Na iPhonu najprej v Safariju izberi »Deli → Dodaj na začetni zaslon« in odpri aplikacijo od tam.
+                  </small>
+                }
                 @if (settingsError) {
                   <div class="alert alert-dark p-2 mt-2 small">
                     {{ settingsError }}
@@ -82,7 +111,7 @@ const MAX_PLAYERS_LOADED = 1000;
           </div>
           <div class="col-12 col-lg-4">
             <div class="card mt-4">
-              <div class="card-header bg-light">
+              <div class="card-header bg-body-tertiary">
                 <h5 class="mt-1 mb-1"><i class="fa-solid fa-key pe-2"></i>Spremeni geslo</h5>
               </div>
               <div class="card-body">
@@ -145,8 +174,36 @@ export class ProfileComponent implements OnInit {
   constructor(
     private demoDataService: DemoDataService,
     private authenticationService: AuthenticationService,
-    private connectionService: ConnectionService
+    private connectionService: ConnectionService,
+    private pushService: PushService,
+    private destroyRef: DestroyRef
   ) {}
+
+  protected readonly pushSupported = this.pushService.supported;
+  protected pushEnabled = false;
+  protected savingPush = false;
+
+  protected get pushPermission(): NotificationPermission | null {
+    return this.pushService.permission;
+  }
+
+  protected async togglePush(): Promise<void> {
+    this.savingPush = true;
+    this.settingsError = "";
+    try {
+      if (this.pushEnabled) await this.pushService.disable();
+      else await this.pushService.enable();
+    } catch (err) {
+      this.settingsError =
+        typeof err === "string" && /not configured/i.test(err)
+          ? "Obvestila na napravi na strežniku še niso nastavljena."
+          : this.pushPermission === "denied"
+            ? "Obvestila so v brskalniku blokirana."
+            : "Obvestil ni bilo mogoče vklopiti.";
+    } finally {
+      this.savingPush = false;
+    }
+  }
 
   protected header = { title: "Moj profil", subtitle: "", sidebar: "" };
   protected user: User | null = null;
@@ -176,6 +233,10 @@ export class ProfileComponent implements OnInit {
       next: (account) => (this.account = account),
       error: (err) => (this.settingsError = err),
     });
+    if (this.pushSupported)
+      this.pushService.subscription
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((subscription) => (this.pushEnabled = !!subscription));
   }
 
   protected toggleNotifications(): void {

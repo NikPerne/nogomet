@@ -18,7 +18,7 @@ const SEASONS_LISTED = 5;
         @if (loaded) {
           <div class="card mt-4">
             <div
-              class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap gap-2"
+              class="card-header bg-body-tertiary d-flex justify-content-between align-items-center flex-wrap gap-2"
               >
               <h4 class="mt-1 mb-1">
                 <i class="fa-solid fa-ranking-star pe-2"></i>Lestvica igralcev
@@ -75,7 +75,9 @@ const SEASONS_LISTED = 5;
                         }
                       </td>
                       <td>
-                        {{ player.name }}
+                        <a [routerLink]="['/igralec', player._id]" class="link-body-emphasis">{{
+                          player.name
+                        }}</a>
                         @if (isCurrentUser(player)) {
                           <small class="text-secondary">(ti)</small>
                         }

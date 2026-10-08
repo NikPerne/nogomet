@@ -32,6 +32,8 @@ import { ForgotPasswordComponent } from './shared/components/forgot-password/for
 import { ResetPasswordComponent } from './shared/components/reset-password/reset-password.component';
 import { AdminUsersComponent } from './shared/components/admin-users/admin-users.component';
 import { EventMvpComponent } from './shared/components/event-mvp/event-mvp.component';
+import { EventWeatherComponent } from './shared/components/event-weather/event-weather.component';
+import { PlayerComponent } from './shared/components/player/player.component';
 
 @NgModule({
   declarations: [
@@ -56,6 +58,8 @@ import { EventMvpComponent } from './shared/components/event-mvp/event-mvp.compo
     ResetPasswordComponent,
     AdminUsersComponent,
     EventMvpComponent,
+    EventWeatherComponent,
+    PlayerComponent,
   ],
   imports: [
     BrowserModule,

@@ -1,7 +1,7 @@
 import { formatDate } from "@angular/common";
 import { Event, hasTimeOfDay } from "./event";
+import { VENUE } from "./venue";
 
-export const EVENT_LOCATION = "PROšport Stražišče, Kranj";
 const EVENT_DURATION_MS = 90 * 60 * 1000;
 
 /**
@@ -45,7 +45,7 @@ export const eventToIcs = (event: Event, url: string): string => {
     ...timing,
     `SUMMARY:${escapeText(event.name)}`,
     `DESCRIPTION:${escapeText(`${event.description}\n${url}`)}`,
-    `LOCATION:${escapeText(EVENT_LOCATION)}`,
+    `LOCATION:${escapeText(VENUE.name)}`,
     `URL:${url}`,
     "END:VEVENT",
     "END:VCALENDAR",

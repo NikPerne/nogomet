@@ -23,9 +23,9 @@ export class AuthenticationService {
       .pipe(tap((authResponse) => this.saveToken(authResponse.token)));
   }
 
-  public register(user: User): Observable<AuthResponse> {
+  public register(user: User, inviteCode?: string): Observable<AuthResponse> {
     return this.demoDataService
-      .register(user)
+      .register(user, inviteCode)
       .pipe(tap((authResponse) => this.saveToken(authResponse.token)));
   }
 

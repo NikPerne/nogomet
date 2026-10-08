@@ -11,11 +11,13 @@ const ctrlMvp = require("../controllers/mvp");
 const ctrlAccount = require("../controllers/account");
 const ctrlAdmin = require("../controllers/admin");
 const ctrlCron = require("../controllers/cron");
+const ctrlPush = require("../controllers/push");
 
 /**
  * Users
  */
 router.get("/users", ctrlUsers.userList);
+router.get("/users/:userId", auth, ctrlUsers.playerHistory);
 
 /**
  * Events
@@ -60,7 +62,9 @@ router
 /**
  * Scheduled jobs (called by an external scheduler with CRON_SECRET)
  */
-router.post("/cron/reminders", ctrlCron.runReminders);
+router.post("/cron/daily", ctrlCron.runDaily);
+// Older URL, kept so existing scheduler jobs keep working
+router.post("/cron/reminders", ctrlCron.runDaily);
 
 /**
  * User administration
@@ -80,10 +84,17 @@ router.put("/season/payments/:userId", adminOnly, ctrlSeason.setPayment);
 /**
  * Authentication
  */
+router.get("/registration", ctrlAuthentication.registrationInfo);
+router.get("/admin/invite-code", adminOnly, ctrlAuthentication.inviteCodeForAdmin);
 router.post("/register", ctrlAuthentication.register);
 router.post("/login", ctrlAuthentication.login);
 router.get("/me", auth, ctrlAccount.me);
 router.put("/me/settings", auth, ctrlAccount.updateSettings);
+router.get("/push/public-key", ctrlPush.publicKey);
+router
+  .route("/push/subscriptions")
+  .post(auth, ctrlPush.subscribe)
+  .delete(auth, ctrlPush.unsubscribe);
 router.put("/me/password", auth, ctrlAuthentication.changePassword);
 router.post("/password/forgot", ctrlAuthentication.forgotPassword);
 router.post("/password/reset", ctrlAuthentication.resetPassword);

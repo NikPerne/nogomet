@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy } from "@angular/core";
+import { Component, ChangeDetectionStrategy, OnInit } from "@angular/core";
 import { Router } from "@angular/router";
 import { HttpErrorResponse } from "@angular/common/http";
 import { throwError } from "rxjs";
@@ -7,10 +7,11 @@ import { User } from "../../classes/user";
 import { AuthenticationService } from "../../services/authentication.service";
 import { HistoryService } from "../../services/history.service";
 import { ConnectionService } from "../../services/connection.service";
+import { DemoDataService } from "../../services/demo-data.service";
 
 @Component({
-    selector: "app-register",
-    template: `<app-header [content]="header"></app-header>
+  selector: "app-register",
+  template: `<app-header [content]="header"></app-header>
     <div class="row">
       <div class="col-12 col-md-8">
         <p>
@@ -34,50 +35,63 @@ import { ConnectionService } from "../../services/connection.service";
               name="name"
               placeholder="Enter your name"
               [(ngModel)]="credentials.name"
+            />
+          </div>
+          <div class="form-group">
+            <label for="email" class="form-label mb-1 mt-3">E-mail address</label>
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              id="email"
+              name="email"
+              placeholder="Enter e-mail address"
+              [(ngModel)]="credentials.email"
+            />
+          </div>
+          <div class="form-group">
+            <label for="password" class="form-label mb-1 mt-3">Password</label>
+            <input
+              type="password"
+              class="form-control form-control-sm"
+              id="password"
+              name="password"
+              placeholder="Enter password"
+              [(ngModel)]="credentials.password"
+            />
+          </div>
+          @if (inviteCodeRequired) {
+            <div class="form-group">
+              <label for="inviteCode" class="form-label mb-1 mt-3">Koda za povabilo</label>
+              <input
+                type="text"
+                class="form-control form-control-sm"
+                id="inviteCode"
+                name="inviteCode"
+                autocapitalize="none"
+                placeholder="Kodo dobiš od organizatorja (npr. v skupinskem klepetu)"
+                [(ngModel)]="inviteCode"
               />
             </div>
-            <div class="form-group">
-              <label for="email" class="form-label mb-1 mt-3"
-                >E-mail address</label
-                >
-                <input
-                  type="text"
-                  class="form-control form-control-sm"
-                  id="email"
-                  name="email"
-                  placeholder="Enter e-mail address"
-                  [(ngModel)]="credentials.email"
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="password" class="form-label mb-1 mt-3">Password</label>
-                  <input
-                    type="password"
-                    class="form-control form-control-sm"
-                    id="password"
-                    name="password"
-                    placeholder="Enter password"
-                    [(ngModel)]="credentials.password"
-                    />
-                  </div>
-                  <div class="form-group mt-3">
-                    <button [disabled]="!isConnected()" type="submit" class="btn btn-sm btn-primary me-2">
-                      <i class="fa-regular fa-circle-check pe-2"></i>Register
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>`,
-    styles: [],
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+          }
+          <div class="form-group mt-3">
+            <button [disabled]="!isConnected()" type="submit" class="btn btn-sm btn-primary me-2">
+              <i class="fa-regular fa-circle-check pe-2"></i>Register
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>`,
+  styles: [],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
   constructor(
     private router: Router,
     private authenticationService: AuthenticationService,
     private historyService: HistoryService,
-    private connectionService: ConnectionService
+    private connectionService: ConnectionService,
+    private demoDataService: DemoDataService
   ) {}
 
   protected formError!: string;
@@ -87,11 +101,22 @@ export class RegisterComponent {
     password: "",
     admin: false,
   };
+  /** Whether the server requires an invite code to register */
+  protected inviteCodeRequired = false;
+  protected inviteCode = "";
   public header = {
     title: "Create a new account",
     subtitle: "",
     sidebar: "",
   };
+
+  ngOnInit(): void {
+    this.demoDataService.getRegistrationInfo().subscribe({
+      next: (info) => (this.inviteCodeRequired = info.inviteCodeRequired),
+      // If unknown, the server still enforces the code and reports a clear error
+      error: () => (this.inviteCodeRequired = true),
+    });
+  }
 
   public isConnected(): boolean {
     return this.connectionService.isConnected;
@@ -113,15 +138,19 @@ export class RegisterComponent {
       this.formError = "Please enter a valid e-mail address.";
     else if (this.credentials.password.length < 3)
       this.formError = "Password must be at least 3 characters long.";
+    else if (this.inviteCodeRequired && !this.inviteCode.trim())
+      this.formError = "Vnesi kodo za povabilo.";
     else this.doRegister();
   }
 
   private doRegister() {
     this.authenticationService
-      .register(this.credentials)
+      .register(this.credentials, this.inviteCode.trim() || undefined)
       .pipe(
         catchError((error: HttpErrorResponse) => {
-          this.formError = error.toString();
+          this.formError = /invite code/i.test(String(error))
+            ? "Koda za povabilo ni pravilna."
+            : error.toString();
           return throwError(() => error);
         })
       )

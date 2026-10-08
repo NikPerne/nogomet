@@ -22,9 +22,11 @@ api/routes/api.js          All REST routes
 api/middleware/auth.js     `auth` (JWT + loads req.user from DB) and `adminOnly`
 api/controllers/           events.js, signup.js, users.js (stats), season.js, teams.js, mvp.js,
                            authentication.js, account.js (/me), admin.js, cron.js, helpers.js
-api/services/              notifications.js (cancellation and reminder emails)
+api/services/              notifications.js (cancellation/reminder email + push), schedule.js (weekly event),
+                           time.js (Europe/Ljubljana wall-clock helpers)
 api/models/                db.js (connection), events.js (Event + embedded Signup), users.js, payments.js
-api/config/                passport.js (local strategy), season.js (season dates and fee), mail.js (Brevo)
+api/config/                passport.js, season.js (season dates and fee), mail.js (Brevo), push.js (Web Push),
+                           registration.js (invite code)
 angular/src/app/shared/    components/, services/, classes/, pipes/
 data/                      Seed JSON (events, test users)
 test/Demo.test.js          Selenium + mocha end-to-end tests (expects Docker setup)
@@ -47,8 +49,11 @@ test/Demo.test.js          Selenium + mocha end-to-end tests (expects Docker set
 - `SEASON_FEE_EUR`: season membership fee, default 80.
 - `APP_URL`: public base URL used in emailed links, e.g. `https://nogomet.onrender.com`. **Required in production**, and never derived from the request's Host header.
 - `BREVO_API_KEY`, `MAIL_FROM` (a sender verified in Brevo), optional `MAIL_FROM_NAME`: email via the Brevo HTTP API (`api/config/mail.js`). Without them, emails are printed to the console outside production; in production the send fails and is only logged.
-- `CRON_SECRET`: shared secret for `POST /api/cron/reminders`, called by an external scheduler with `Authorization: Bearer <CRON_SECRET>`. Without it, the endpoint answers 503.
-- `REMINDER_HOURS_BEFORE`: reminders cover events starting within this many hours (default 30). A daily run at ~18:00 reminds the evening before.
+- `CRON_SECRET`: shared secret for `POST /api/cron/daily` (alias `/api/cron/reminders`), called once a day by an external scheduler (cron-job.org) with `Authorization: Bearer <CRON_SECRET>`. Without it, the endpoint answers 503.
+- `REMINDER_HOURS_BEFORE`: reminders cover events starting within this many hours (default 30).
+- `AUTO_WEEKLY_EVENTS`: set to `false` to stop the daily job creating next week's event.
+- `REGISTRATION_CODE`: invite code required to register (case-insensitive). Without it, registration is open.
+- `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` (generate once with `npx web-push generate-vapid-keys`) and `VAPID_SUBJECT` (`mailto:...`): Web Push. Without them push is off (`/api/push/public-key` answers 503) and only email is sent.
 - `HTTPS=true`: serve over HTTPS using `/etc/secrets/server.key` and `/etc/secrets/server.cert`.
 - `PORT`: defaults to 3000.
 
@@ -74,6 +79,8 @@ test/Demo.test.js          Selenium + mocha end-to-end tests (expects Docker set
   - `mvpWinnerKeys()` returns the top-voted keys; ties all count.
 - `remindersSentAt` (on Event) is set when the reminder emails went out, so each event is reminded about once.
 - **Season** (`api/config/season.js`): 1 October – 30 April. Dates in May–September belong to the *upcoming* season. Labels look like `2026/27`.
+- **PushSubscription** (`PushSubscriptions` collection): `{ userId, endpoint (unique), keys: { p256dh, auth } }`. There is one per device. Sending removes subscriptions that answer 404 or 410, and admin user deletion and logout remove them too.
+- **Weekly events** (`api/services/schedule.js`): when no future event exists, the daily job copies the latest event one or more weeks later: name, description, `maxPlayers`, and the same **local** kick-off time (`addDaysInZone`, which is correct across clock changes). The default kick-off time for new events is 18:00 (`DEFAULT_EVENT_TIME`).
 - **SeasonPayment** (`SeasonPayments` collection): `{ season, userId, paidOn }`, unique per season and user. A document exists only when the fee is paid; marking a player unpaid deletes it. Fees are per season, not per match.
 
 ## API rules worth knowing
@@ -87,10 +94,13 @@ test/Demo.test.js          Selenium + mocha end-to-end tests (expects Docker set
   - `mvpAwards`: events where the user had the most player-of-the-match votes.
   - `?season=2026/27` limits everything to that season's events. Without it the stats are all-time.
 - Player of the match: `GET /api/events/:id/mvp` (logged in) returns `{ canVote, votingOpen, myVote }`. `PUT` with `playerKey` votes and returns `{ event, ...status }`.
-- Notifications (`api/services/notifications.js`; dates are formatted in `Europe/Ljubljana` time):
-  - Cancelling an upcoming event via `PUT /api/events/:id` emails users who said "Pridem". This happens after the response is sent.
-  - `POST /api/cron/reminders` (requires `CRON_SECRET`) emails regulars (users who played at least one past game) without an own signup for events within `REMINDER_HOURS_BEFORE`.
-  - Both respect `emailNotifications`.
+- Notifications (`api/services/notifications.js`; dates are formatted in `Europe/Ljubljana` time) go out by email (unless `emailNotifications` is false) **and** by push to the user's subscribed devices:
+  - Cancelling an upcoming event via `PUT /api/events/:id` notifies users who said "Pridem". This happens after the response is sent.
+  - `POST /api/cron/daily` (requires `CRON_SECRET`) first creates the next weekly event if needed. It then reminds regulars (users who played at least one past game) without an own signup, for events within `REMINDER_HOURS_BEFORE`.
+  - It responds with `{ createdEventId, events, emailsSent, pushesSent }`.
+- Push payloads use the Angular service worker format: `{ notification: { title, body, data: { onActionClick: { default: { operation: "navigateLastFocusedOrOpen", url } } } } }`. `POST /api/push/subscriptions` takes the browser's `PushSubscription` JSON, and `DELETE` takes `{ endpoint }`.
+- Registration: `GET /api/registration` returns `{ inviteCodeRequired }`. `POST /api/register` needs `inviteCode` when `REGISTRATION_CODE` is set, and answers 403 otherwise. `GET /api/admin/invite-code` (admin) shows the code.
+- `GET /api/users/:id` (logged in) returns `{ player, matches }`: all-time stats plus the answered past events, newest first, each with `status` (`played`/`waitlisted`/`declined`), `team`, `result`, `score` and `mvp`.
 - Account: `GET /api/me` returns `{ _id, name, email, admin, emailNotifications }`. `PUT /api/me/settings` takes `emailNotifications`.
 - Admin: `GET /api/admin/users` lists all users. `PUT /api/admin/users/:id` takes `admin`. `DELETE /api/admin/users/:id` also deletes the user's season payments; their signups stay but no longer count. Admins can't remove their own admin rights or delete themselves.
 - Teams (admin): `PUT /api/events/:id/teams` takes a **JSON** body `{ rumeni: [...], rdeci: [...] }`; `DELETE` removes the teams and the score. `PUT /api/events/:id/score` takes form-encoded `rumeni` and `rdeci` (409 without saved teams); `DELETE` removes the score.
@@ -128,9 +138,14 @@ test/Demo.test.js          Selenium + mocha end-to-end tests (expects Docker set
   - "Deli", which uses `navigator.share` and falls back to the clipboard,
   - "Koledar", which downloads an `.ics` file built in `shared/classes/calendar.ts`. Events without a time become all-day events, and timed ones last 90 minutes.
 - Sharing goes through `ShareService` (`navigator.share`, falling back to the clipboard).
+- **Dark mode** follows the device. An inline script in `index.html` sets `data-bs-theme` before the app starts, and `ThemeService` (started by `FrameworkComponent`) keeps it in sync and exposes an `isDark` signal; the sidebar chart uses it.
+  - Use theme-aware Bootstrap classes (`bg-body-tertiary`, `text-body`, `link-body-emphasis`, `*-text-emphasis` variables), never `bg-light`, `text-dark` or hard-coded colours, except badges on coloured backgrounds.
+- `VENUE` (`shared/classes/venue.ts`) holds the pitch name, coordinates and time zone, used by the map, calendar files and weather.
+- Weather: `EventWeatherComponent` (`app-event-weather`) shows the Open-Meteo forecast (free, no key, called from the browser by `WeatherService`) for the kick-off hour. It appears only for upcoming, non-cancelled events within 14 days, and fails silently.
+- Push: `PushService` uses Angular's `SwPush`, so it only works in production builds (the service worker is off in development). On iPhone it works only from a home-screen installed app (iOS 16.4+). The switch is in `/profil`.
 - `EventDetailsComponent.setSignups` replaces the whole `event` object, so child components' `ngOnChanges` fire. Don't mutate `event.signedup` in place.
-- Pages: `/lestvica` (`LeaderboardComponent`, all stats from `GET /api/users`, with a season picker), `/profil` (own stats, season status, email notification switch, change password; linked from the user menu), `/uporabniki` (`AdminUsersComponent`, admin user management; the menu link is shown to admins only), `/pozabljeno-geslo` and `/ponastavi-geslo?token=` (public; the latter path must match the link built in `api/controllers/authentication.js`), and `/clanarina` (`SeasonComponent`). On `/clanarina` admins tick payments with checkboxes, and you can browse seasons with the arrows. The sidebar chart shows `gamesPlayed`.
-- Routes `''`, `events`, `events/:eventId`, `lestvica`, `clanarina`, `profil` and `uporabniki` are protected by `AuthGuard`. Unknown routes redirect to `''`.
+- Pages: `/lestvica` (`LeaderboardComponent`, all stats from `GET /api/users`, with a season picker), `/igralec/:userId` (`PlayerComponent`, a player's stats and history; player names in lists link here), `/profil` (own stats, season status, email notification switch, change password; linked from the user menu), `/uporabniki` (`AdminUsersComponent`, admin user management; the menu link is shown to admins only), `/pozabljeno-geslo` and `/ponastavi-geslo?token=` (public; the latter path must match the link built in `api/controllers/authentication.js`), and `/clanarina` (`SeasonComponent`). On `/clanarina` admins tick payments with checkboxes, and you can browse seasons with the arrows. The sidebar chart shows `gamesPlayed`.
+- Routes `''`, `events`, `events/:eventId`, `lestvica`, `igralec/:userId`, `clanarina`, `profil` and `uporabniki` are protected by `AuthGuard`. Unknown routes redirect to `''`.
 - The Angular service worker (`ngsw-config.json`) is enabled in production. Its `navigationUrls` exclude `/api` and `/api/**`. Without that, the service worker answers navigations to `/api/docs` (Swagger) with the cached Angular app. Keep the exclusion when adding server-rendered pages. Users get a new frontend version after reloading twice.
 
 ## Conventions

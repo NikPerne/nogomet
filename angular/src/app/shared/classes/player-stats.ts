@@ -13,3 +13,24 @@ export class PlayerStats {
   /** Matches where the player got the most player-of-the-match votes */
   mvpAwards!: number;
 }
+
+/**
+ * One past match in a player's history (GET /api/users/:id)
+ */
+export interface PlayerMatch {
+  _id: string;
+  name: string;
+  date: Date;
+  /** played (confirmed), waitlisted, or declined ("Ne pridem") */
+  status: "played" | "waitlisted" | "declined";
+  team: "rumeni" | "rdeci" | null;
+  result: "win" | "draw" | "loss" | null;
+  score: { rumeni: number; rdeci: number } | null;
+  mvp: boolean;
+}
+
+export interface PlayerHistory {
+  player: PlayerStats;
+  /** Newest first */
+  matches: PlayerMatch[];
+}
