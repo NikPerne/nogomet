@@ -20,6 +20,8 @@ const routes: Routes = [
   { path: "events/:eventId", component: DetailsPageEventsComponent, canActivate: [AuthGuard]},
   { path: "register", component: RegisterComponent },
   { path: "login", component: LoginComponent },
+  // Unknown URLs go to the homepage instead of an empty page
+  { path: "**", redirectTo: "" },
 ];
 
 @NgModule({

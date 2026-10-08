@@ -25,7 +25,7 @@ Aplikacija Nogomet je namenjena organizaciji in sledenju rekreativnih nogometnih
 
 
 ## Swagger Link: 
-- [https://nogomet.onrender.com/api-docs](https://nogomet.onrender.com/api/docs)
+- [https://nogomet.onrender.com/api/docs](https://nogomet.onrender.com/api/docs)
 
 Uporabnik - admin:
 - Uporabniško ime: Nik Perne

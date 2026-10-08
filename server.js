@@ -42,6 +42,10 @@ const swaggerDocument = swaggerJsDoc({
     ],
     servers: [
       {
+        url: "/api",
+        description: "This server (the one serving these docs)",
+      },
+      {
         url: "https://localhost:3000/api",
         description: "Secure development server for testing",
       },

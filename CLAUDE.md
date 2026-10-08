@@ -87,7 +87,8 @@ test/Demo.test.js          Selenium + mocha end-to-end tests (expects Docker set
   - "Deli", which uses `navigator.share` and falls back to the clipboard,
   - "Koledar", which downloads an `.ics` file built in `shared/classes/calendar.ts`. Events without a time become all-day events, and timed ones last 90 minutes.
 - Pages: `/lestvica` (`LeaderboardComponent`, all stats from `GET /api/users`) and `/clanarina` (`SeasonComponent`). On `/clanarina` admins tick payments with checkboxes, and you can browse seasons with the arrows. The sidebar chart shows `gamesPlayed`.
-- Routes `''`, `events`, `events/:eventId`, `lestvica` and `clanarina` are protected by `AuthGuard`.
+- Routes `''`, `events`, `events/:eventId`, `lestvica` and `clanarina` are protected by `AuthGuard`. Unknown routes redirect to `''`.
+- The Angular service worker (`ngsw-config.json`) is enabled in production. Its `navigationUrls` exclude `/api` and `/api/**`. Without that, the service worker answers navigations to `/api/docs` (Swagger) with the cached Angular app. Keep the exclusion when adding server-rendered pages. Users get a new frontend version after reloading twice.
 
 ## Conventions
 
