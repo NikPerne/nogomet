@@ -52,6 +52,8 @@ test/Demo.test.js          Selenium + mocha end-to-end tests (expects Docker set
 - `CRON_SECRET`: shared secret for `POST /api/cron/daily` (alias `/api/cron/reminders`), called once a day by an external scheduler (cron-job.org) with `Authorization: Bearer <CRON_SECRET>`. Without it, the endpoint answers 503.
 - `REMINDER_HOURS_BEFORE`: reminders cover events starting within this many hours (default 30).
 - `AUTO_WEEKLY_EVENTS`: set to `false` to stop the daily job creating next week's event.
+- `AUTO_EVENT_DAYS_BEFORE`: create the next weekly match only when it is at most this many calendar days away (Ljubljana time). For example, `2` with the daily run at 18:00 creates a Tuesday match on Sunday. Unset means it is created as soon as the previous match is over.
+- `AUTO_EVENT_MAX_PLAYERS`: limit for auto-created matches. `none` means no limit, a number sets a fixed limit, and unset copies the latest event's limit.
 - `REGISTRATION_CODE`: invite code required to register (case-insensitive). Without it, registration is open.
 - `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` (generate once with `npx web-push generate-vapid-keys`) and `VAPID_SUBJECT` (`mailto:...`): Web Push. Without them push is off (`/api/push/public-key` answers 503) and only email is sent.
 - `HTTPS=true`: serve over HTTPS using `/etc/secrets/server.key` and `/etc/secrets/server.cert`.

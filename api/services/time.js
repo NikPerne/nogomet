@@ -52,4 +52,17 @@ const addDaysInZone = (date, days) => {
   return fromZoned(p.year, p.month, p.day + days, p.hour, p.minute);
 };
 
-module.exports = { TIME_ZONE, zonedParts, addDaysInZone };
+/**
+ * Calendar days from `from` to `to` in TIME_ZONE (e.g. Sunday 18:00 -> Tuesday 18:00 is 2),
+ * ignoring the time of day
+ */
+const calendarDaysBetween = (from, to) => {
+  const a = zonedParts(from);
+  const b = zonedParts(to);
+  return Math.round(
+    (Date.UTC(b.year, b.month - 1, b.day) - Date.UTC(a.year, a.month - 1, a.day)) /
+      (24 * 60 * 60 * 1000)
+  );
+};
+
+module.exports = { TIME_ZONE, zonedParts, addDaysInZone, calendarDaysBetween };
