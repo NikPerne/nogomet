@@ -27,15 +27,9 @@ Aplikacija Nogomet je namenjena organizaciji in sledenju rekreativnih nogometnih
 ## Swagger Link: 
 - [https://nogomet.onrender.com/api/docs](https://nogomet.onrender.com/api/docs)
 
-Uporabnik - admin:
-- Uporabniško ime: Nik Perne
-- Elektronski naslov: nik.perne@gmail.com
-- Geslo: Oklop123
-
-Uporabnik - navaden:
-- Uporabniško ime: test
-- Elektronski naslov: test@gmail.com
-- Geslo: Oklop123
+## Uporabniški računi:
+- Račun ustvariš z registracijo v aplikaciji. Pozabljeno geslo ponastaviš s povezavo »Pozabljeno geslo?« na strani za prijavo.
+- Administratorske pravice (dodajanje, urejanje in odpoved dogodkov, ekipe, rezultati, članarine) dobi uporabnik, ki ima v bazi pri svojem računu nastavljeno `admin: true`.
 
 ## PREZENTACIJA:
 [Google Predstavitev](https://docs.google.com/presentation/d/1vlyFQ23D49aC4sA6mefUrd_ueeq5vy1UmWnYHGZL0dc/edit?usp=drivesdk)
