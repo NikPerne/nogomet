@@ -5,10 +5,6 @@ registerLocaleData(localeSl, "sl");
 import { BrowserModule } from "@angular/platform-browser";
 import { HttpClientModule } from "@angular/common/http";
 import { ModalModule, BsModalService } from "ngx-bootstrap/modal";
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
-import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
 import { NgApexchartsModule } from "ng-apexcharts";
 
@@ -29,6 +25,7 @@ import { DetailsPageEventsComponent } from './shared/components/details-page-eve
 import { MostRecentSignupPipe } from './shared/pipes/most-recent-signup.pipe';
 import { EventFormComponent } from './shared/components/event-form/event-form.component';
 import { LeaderboardComponent } from './shared/components/leaderboard/leaderboard.component';
+import { SeasonComponent } from './shared/components/season/season.component';
 
 @NgModule({
   declarations: [
@@ -46,14 +43,11 @@ import { LeaderboardComponent } from './shared/components/leaderboard/leaderboar
     MostRecentSignupPipe,
     EventFormComponent,
     LeaderboardComponent,
+    SeasonComponent,
   ],
   imports: [
     BrowserModule,
-    MatInputModule,
     NgApexchartsModule,
-    MatNativeDateModule,
-    MatFormFieldModule,
-    MatDatepickerModule,
     HttpClientModule,
     AppRoutingModule,
     BrowserAnimationsModule,

@@ -3,6 +3,7 @@ import {
   EventEmitter,
   Input,
   OnChanges,
+  OnInit,
   Output,
   SimpleChanges,
   TemplateRef,
@@ -25,16 +26,19 @@ import { AuthenticationService } from "../../services/authentication.service";
 import { ConnectionService } from "../../services/connection.service";
 import { User } from "../../classes/user";
 import { Signup } from "../../classes/signup";
+import { PlayerStats } from "../../classes/player-stats";
 
-/** Same limit as the signup schema's note field */
+/** Same limits as the API (signup note field, guest name) */
 const NOTE_MAX_LENGTH = 100;
+const GUEST_NAME_MAX_LENGTH = 40;
+const MAX_PLAYERS_LOADED = 1000;
 
 @Component({
   selector: "app-event-details",
   templateUrl: "event-details.component.html",
   styles: [],
 })
-export class EventDetailsComponent implements OnChanges {
+export class EventDetailsComponent implements OnInit, OnChanges {
   constructor(
     private demoDataService: DemoDataService,
     private authenticationService: AuthenticationService,
@@ -52,11 +56,42 @@ export class EventDetailsComponent implements OnChanges {
   protected formError = "";
   protected teams: [string[], string[]] | null = null;
   protected noteDraft = "";
+  protected guestName = "";
   protected readonly noteMaxLength = NOTE_MAX_LENGTH;
+  protected readonly guestNameMaxLength = GUEST_NAME_MAX_LENGTH;
+  /** All players with statistics, used for "who hasn't replied yet" */
+  private players: PlayerStats[] = [];
   private modalRef?: BsModalRef;
+
+  ngOnInit(): void {
+    this.demoDataService.getPlayerStats(MAX_PLAYERS_LOADED).subscribe({
+      next: (players) => (this.players = players),
+      // The reminder list is optional, so the page works without it
+      error: () => (this.players = []),
+    });
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes["event"]) this.noteDraft = this.ownSignup?.note ?? "";
+  }
+
+  /**
+   * Regular players (at least one game played) who haven't answered this event yet
+   */
+  public get notResponded(): PlayerStats[] {
+    if (!this.event || this.signupsClosed) return [];
+    const signups = (this.event.signedup ?? []).filter((signup) => !signup.guestOf);
+    return this.players.filter(
+      (player) =>
+        player.gamesPlayed > 0 &&
+        !signups.some((signup) =>
+          signup.userId ? signup.userId === player._id : signup.name === player.name
+        )
+    );
+  }
+
+  public get notRespondedNames(): string {
+    return this.notResponded.map((player) => player.name).join(", ");
   }
 
   /**
@@ -135,6 +170,22 @@ export class EventDetailsComponent implements OnChanges {
     const note = this.noteDraft.trim();
     if (own?._id) this.updateSignup(own._id, { attending, note });
     else this.createSignup({ name: this.getCurrentUserName(), attending, note });
+  }
+
+  /**
+   * Adds a guest (a friend, or for admins anyone who answered elsewhere)
+   */
+  protected addGuest(): void {
+    const name = this.guestName.trim();
+    if (!name) return;
+    this.clearMessages();
+    this.demoDataService.addGuest(this.event._id, name).subscribe({
+      next: (guest: Signup) => {
+        this.setSignups([guest, ...(this.event.signedup ?? [])]);
+        this.guestName = "";
+      },
+      error: (err) => (this.errorMessage = err),
+    });
   }
 
   protected saveNote(): void {
@@ -265,10 +316,22 @@ export class EventDetailsComponent implements OnChanges {
   }
 
   /**
-   * Shares the event via the device share sheet (e.g. WhatsApp), or copies it to the clipboard
+   * Shares the event (when, how many signed up) with the group
    */
-  protected async share(): Promise<void> {
-    this.clearMessages();
+  protected share(): Promise<void> {
+    return this.shareText(`${this.eventSummary()}\nPrijavi se:`);
+  }
+
+  /**
+   * Shares a reminder naming the regulars who haven't answered yet
+   */
+  protected remind(): Promise<void> {
+    return this.shareText(
+      `${this.eventSummary()}\nŠe niste odgovorili: ${this.notRespondedNames}\nPrijavi se:`
+    );
+  }
+
+  private eventSummary(): string {
     const when = formatDate(
       this.event.date,
       this.hasTime ? "EEEE, d. MMMM 'ob' HH:mm" : "EEEE, d. MMMM",
@@ -277,7 +340,15 @@ export class EventDetailsComponent implements OnChanges {
     const players = this.event.maxPlayers
       ? `${this.confirmedCount}/${this.event.maxPlayers}`
       : `${this.confirmedCount}`;
-    const text = `⚽ ${this.event.name}: ${when}\nPrijavljenih: ${players}\nPrijavi se:`;
+    return `⚽ ${this.event.name}: ${when}\nPrijavljenih: ${players}`;
+  }
+
+  /**
+   * Shares text plus the page link via the device share sheet (e.g. WhatsApp),
+   * or copies it to the clipboard where sharing isn't supported
+   */
+  private async shareText(text: string): Promise<void> {
+    this.clearMessages();
     const url = window.location.href;
     try {
       if (navigator.share) {
@@ -306,8 +377,13 @@ export class EventDetailsComponent implements OnChanges {
     this.teams = [players.slice(0, half), players.slice(half)];
   }
 
+  /**
+   * Users can remove their own signup and guests they added
+   */
   public canDeleteSignUp(signup: Signup): boolean {
-    return this.isLoggedIn() && !this.signupsClosed && this.isOwnSignup(signup);
+    if (!this.isLoggedIn() || this.signupsClosed) return false;
+    const user = this.authenticationService.getCurrentUser();
+    return this.isOwnSignup(signup) || (!!signup.guestOf && signup.guestOf === user?._id);
   }
 
   private clearMessages(): void {
@@ -324,11 +400,12 @@ export class EventDetailsComponent implements OnChanges {
   }
 
   /**
-   * Signups created before userId was stored can only be matched by name
+   * The user's own signup (never a guest they added). Signups created before
+   * userId was stored can only be matched by name.
    */
   private isOwnSignup(signup: Signup): boolean {
     const user: User | null = this.authenticationService.getCurrentUser();
-    if (!user) return false;
+    if (!user || signup.guestOf) return false;
     return signup.userId ? signup.userId === user._id : signup.name === user.name;
   }
 

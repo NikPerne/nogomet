@@ -38,31 +38,25 @@
       placeholder="Enter description"
     ></textarea>
   </div>
-  <div class="form-group">
-    <label for="event-date" class="form-label mt-2">Date of event</label>
-    <mat-form-field>
+  <div class="row">
+    <div class="form-group col-7">
+      <label for="event-date" class="form-label mt-2">Date of event</label>
       <input
         id="event-date"
-        matInput
-        [matDatepicker]="datepicker"
-        placeholder="Choose a date"
+        type="date"
         [(ngModel)]="date"
+        class="form-control form-control-sm"
       />
-      <mat-datepicker-toggle
-        matIconSuffix
-        [for]="datepicker"
-      ></mat-datepicker-toggle>
-      <mat-datepicker #datepicker></mat-datepicker>
-    </mat-form-field>
-  </div>
-  <div class="form-group">
-    <label for="event-time" class="form-label mt-2">Start time</label>
-    <input
-      id="event-time"
-      type="time"
-      [(ngModel)]="time"
-      class="form-control form-control-sm"
-    />
+    </div>
+    <div class="form-group col-5">
+      <label for="event-time" class="form-label mt-2">Start time</label>
+      <input
+        id="event-time"
+        type="time"
+        [(ngModel)]="time"
+        class="form-control form-control-sm"
+      />
+    </div>
   </div>
   <div class="form-group">
     <label for="event-max-players" class="form-label mt-2"

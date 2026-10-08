@@ -5,6 +5,7 @@ const ctrlEvents = require("../controllers/events");
 const ctrlSignup = require("../controllers/signup");
 const ctrlUsers = require("../controllers/users");
 const ctrlAuthentication = require("../controllers/authentication");
+const ctrlSeason = require("../controllers/season");
 
 /**
  * Users
@@ -33,6 +34,13 @@ router
   .get(ctrlSignup.signupReadOne)
   .put(auth, ctrlSignup.signupUpdateOne)
   .delete(auth, ctrlSignup.signupDeleteOne);
+router.post("/events/:eventId/guests", auth, ctrlSignup.guestCreate);
+
+/**
+ * Season membership fees
+ */
+router.get("/season", auth, ctrlSeason.seasonOverview);
+router.put("/season/payments/:userId", adminOnly, ctrlSeason.setPayment);
 
 /**
  * Authentication

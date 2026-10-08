@@ -14,4 +14,21 @@ const parseLimit = (value) => {
 
 const isValidId = (id) => mongoose.isValidObjectId(id);
 
-module.exports = { parseLimit, isValidId };
+/**
+ * Form bodies send booleans as strings, so accept both representations
+ */
+const parseBoolean = (value) => {
+  if (value === true || value === "true") return true;
+  if (value === false || value === "false") return false;
+  return undefined;
+};
+
+/**
+ * The user's own signup (never a guest they added). Signups created before
+ * userId was stored can only be matched by name.
+ */
+const isOwnSignup = (signup, user) =>
+  !signup.guestOf &&
+  (signup.userId ? signup.userId.equals(user._id) : signup.name === user.name);
+
+module.exports = { parseLimit, isValidId, parseBoolean, isOwnSignup };

@@ -114,6 +114,26 @@
           </div>
         </div>
       </div>
+      <div class="card mt-4" *ngIf="notResponded.length > 0">
+        <div class="card-header bg-light">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mt-1 mb-1">
+              <i class="fa-regular fa-bell pe-2"></i>Še niso odgovorili ({{
+                notResponded.length
+              }})
+            </h5>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-success"
+              title="Deli opomnik v skupino"
+              (click)="remind()"
+            >
+              <i class="fa-solid fa-share-nodes me-1"></i>Opomni
+            </button>
+          </div>
+        </div>
+        <div class="card-body small">{{ notRespondedNames }}</div>
+      </div>
     </div>
     <div class="col-6 col-md-4">
       <div class="card mt-4">
@@ -143,7 +163,12 @@
             >
               <div id="author" class="ms-1">
                 <i class="fa-regular fa-user ps-4 pe-2"></i>{{ signup.name
-                }}<i
+                }}<span
+                  *ngIf="signup.guestOf"
+                  class="badge bg-info text-dark ms-2"
+                  [title]="'Gosta je dodal(a) ' + signup.guestOfName"
+                  >gost · {{ signup.guestOfName }}</span
+                ><i
                   *ngIf="canDeleteSignUp(signup)"
                   class="fa-solid fa-trash-can text-primary show-pointer ms-4"
                   (click)="deleteSignup(signup._id)"
@@ -245,6 +270,29 @@
         <i class="fa-regular fa-circle-xmark me-2"></i>Ne pridem
       </button>
     </div>
+    <form class="col-md-8 d-flex gap-2 align-items-center mt-2" (ngSubmit)="addGuest()">
+      <input
+        type="text"
+        name="guestName"
+        class="form-control form-control-sm"
+        [(ngModel)]="guestName"
+        [maxlength]="guestNameMaxLength"
+        [placeholder]="
+          isAdmin()
+            ? 'Ime gosta ali igralca, ki se je prijavil drugje'
+            : 'Pripelješ prijatelja? Ime gosta'
+        "
+        aria-label="Ime gosta"
+      />
+      <button
+        type="submit"
+        class="btn btn-sm btn-outline-primary text-nowrap"
+        [disabled]="!guestName.trim() || !isConnected()"
+        [title]="isAdmin() ? '' : 'Največ 3 gostje na dogodek'"
+      >
+        <i class="fa-solid fa-user-plus me-1"></i>Dodaj gosta
+      </button>
+    </form>
   </ng-template>
   <ng-template #editForm>
     <app-event-form

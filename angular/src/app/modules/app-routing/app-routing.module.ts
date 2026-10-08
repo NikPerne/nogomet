@@ -9,11 +9,13 @@ import { DetailsPageEventsComponent } from "../../shared/components/details-page
 import { AuthGuard } from "../../shared/services/auth-guard.service";
 import { EventListComponent } from "../../shared/components/event-list/event-list.component";
 import { LeaderboardComponent } from "../../shared/components/leaderboard/leaderboard.component";
+import { SeasonComponent } from "../../shared/components/season/season.component";
 
 const routes: Routes = [
   { path: "", component: HomepageComponent, canActivate: [AuthGuard]},
   { path: "events", component: EventListComponent, canActivate: [AuthGuard]},
   { path: "lestvica", component: LeaderboardComponent, canActivate: [AuthGuard]},
+  { path: "clanarina", component: SeasonComponent, canActivate: [AuthGuard]},
   { path: "about", component: AboutComponent },
   { path: "events/:eventId", component: DetailsPageEventsComponent, canActivate: [AuthGuard]},
   { path: "register", component: RegisterComponent },

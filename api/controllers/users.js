@@ -1,13 +1,7 @@
 const mongoose = require("mongoose");
 const User = mongoose.model("User");
 const Event = mongoose.model("Event");
-const { parseLimit } = require("./helpers");
-
-/**
- * Signups created before userId was stored can only be matched by name
- */
-const belongsTo = (signup, user) =>
-  signup.userId ? signup.userId.equals(user._id) : signup.name === user.name;
+const { parseLimit, isOwnSignup } = require("./helpers");
 
 /**
  * Statistics for one user over played events (started, not cancelled, oldest first).
@@ -18,10 +12,10 @@ const belongsTo = (signup, user) =>
  */
 const playerStats = (user, events) => {
   const played = events.map((event) =>
-    event.confirmedSignups().some((signup) => belongsTo(signup, user))
+    event.confirmedSignups().some((signup) => isOwnSignup(signup, user))
   );
   const firstSignup = events.findIndex((event) =>
-    event.signedup.some((signup) => belongsTo(signup, user))
+    event.signedup.some((signup) => isOwnSignup(signup, user))
   );
   const eligible = firstSignup === -1 ? 0 : events.length - firstSignup;
   const gamesPlayed = played.filter(Boolean).length;

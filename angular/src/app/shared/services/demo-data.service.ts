@@ -14,6 +14,7 @@ import { BROWSER_STORAGE } from "../classes/storage";
 import { environment } from "../../../environments/environment";
 import { Signup } from "../classes/signup";
 import { PlayerStats } from "../classes/player-stats";
+import { SeasonOverview } from "../classes/season";
 
 @Injectable({
   providedIn: "root",
@@ -112,6 +113,39 @@ export class DemoDataService {
     if (changes.note !== undefined) body = body.set("note", changes.note);
     return this.http
       .put<Signup>(url, body, { headers: this.headers(true) })
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Season fee overview; without a season label the current (or upcoming) season
+   */
+  public getSeason(season?: string): Observable<SeasonOverview> {
+    const url: string = `${this.apiUrl}/season`;
+    const params = season ? new HttpParams().set("season", season) : undefined;
+    return this.http
+      .get<SeasonOverview>(url, { params, headers: this.headers(true) })
+      .pipe(retry(1), catchError(this.handleError));
+  }
+
+  public setSeasonPayment(
+    userId: string,
+    season: string,
+    paid: boolean
+  ): Observable<{ paid: boolean; paidOn: Date | null }> {
+    const url: string = `${this.apiUrl}/season/payments/${userId}`;
+    const body = new HttpParams().set("paid", paid).set("season", season);
+    return this.http
+      .put<{ paid: boolean; paidOn: Date | null }>(url, body, {
+        headers: this.headers(true),
+      })
+      .pipe(catchError(this.handleError));
+  }
+
+  public addGuest(eventId: string, name: string): Observable<Signup> {
+    const url: string = `${this.apiUrl}/events/${eventId}/guests`;
+    const body = new HttpParams().set("name", name);
+    return this.http
+      .post<Signup>(url, body, { headers: this.headers(true) })
       .pipe(catchError(this.handleError));
   }
 

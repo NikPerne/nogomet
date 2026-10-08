@@ -33,6 +33,12 @@ const mongoose = require("mongoose");
  *      type: string
  *      description: Optional short note from the player (max 100 characters).
  *      example: Pridem 10 min kasneje
+ *     guestOf:
+ *      type: string
+ *      description: For guests, ID of the user who added them (guests have no userId).
+ *     guestOfName:
+ *      type: string
+ *      description: For guests, name of the user who added them.
  *    required:
  *     - name
  *     - attending
@@ -50,6 +56,8 @@ const signupSchema = new mongoose.Schema({
     trim: true,
     maxlength: [100, "Note can be at most 100 characters!"],
   },
+  guestOf: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  guestOfName: { type: String },
 });
 
 /**

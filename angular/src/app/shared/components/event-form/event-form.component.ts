@@ -30,7 +30,8 @@ export class EventFormComponent implements OnChanges {
 
   protected name = "";
   protected description = "";
-  protected date: Date = new Date();
+  /** Native date input value, "yyyy-MM-dd" */
+  protected date = "";
   protected time = DEFAULT_EVENT_TIME;
   protected maxPlayers: number | null = null;
   protected validationError = "";
@@ -43,7 +44,7 @@ export class EventFormComponent implements OnChanges {
     const event = this.event;
     this.name = event?.name ?? "";
     this.description = event?.description ?? "";
-    this.date = event ? new Date(event.date) : new Date();
+    this.date = formatDate(event ? event.date : new Date(), "yyyy-MM-dd", "sl");
     this.time =
       event && hasTimeOfDay(event)
         ? formatDate(event.date, "HH:mm", "sl")
@@ -54,11 +55,11 @@ export class EventFormComponent implements OnChanges {
 
   protected submit(): void {
     this.validationError = "";
-    const maxPlayers = this.maxPlayers;
+    const { maxPlayers } = this;
     const valid =
       this.name.trim() &&
       this.description.trim() &&
-      this.date &&
+      /^\d{4}-\d{2}-\d{2}$/.test(this.date ?? "") &&
       /^\d{2}:\d{2}$/.test(this.time ?? "") &&
       (maxPlayers == null || (Number.isInteger(maxPlayers) && maxPlayers >= 1));
     if (!valid) {
@@ -76,12 +77,11 @@ export class EventFormComponent implements OnChanges {
   }
 
   /**
-   * The date picker gives a date; the time comes from the separate time field
+   * Combines the date ("yyyy-MM-dd") and time ("HH:mm") inputs into a local Date
    */
   private combinedDate(): Date {
-    const date = new Date(this.date);
+    const [year, month, day] = this.date.split("-").map(Number);
     const [hours, minutes] = this.time.split(":").map(Number);
-    date.setHours(hours, minutes, 0, 0);
-    return date;
+    return new Date(year, month - 1, day, hours, minutes);
   }
 }
