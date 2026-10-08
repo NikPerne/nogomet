@@ -20,12 +20,15 @@ const isPushConfigured = () => {
 /**
  * Sends a notification to every subscription of the given users. Payloads use the format
  * the Angular service worker understands ({ notification: { title, body, data } }); clicking
- * opens `url`. Expired subscriptions (404/410) are deleted. Returns how many were delivered.
+ * opens `url`. Expired subscriptions (404/410) are deleted.
+ * Returns { subscriptions, delivered, errors } (errors as readable messages).
  */
-const sendPushToUsers = async (userIds, { title, body, url }) => {
-  if (!isPushConfigured() || userIds.length === 0) return 0;
+const sendPushDetailed = async (userIds, { title, body, url }) => {
+  const result = { subscriptions: 0, delivered: 0, errors: [] };
+  if (!isPushConfigured() || userIds.length === 0) return result;
   const PushSubscription = mongoose.model("PushSubscription");
   const subscriptions = await PushSubscription.find({ userId: { $in: userIds } }).exec();
+  result.subscriptions = subscriptions.length;
   const { publicKey, privateKey, subject } = vapid();
   const payload = JSON.stringify({
     notification: {
@@ -37,7 +40,6 @@ const sendPushToUsers = async (userIds, { title, body, url }) => {
       },
     },
   });
-  let delivered = 0;
   for (const subscription of subscriptions) {
     try {
       await webpush.sendNotification(
@@ -45,14 +47,26 @@ const sendPushToUsers = async (userIds, { title, body, url }) => {
         payload,
         { vapidDetails: { subject, publicKey, privateKey }, TTL: 24 * 60 * 60 }
       );
-      delivered++;
+      result.delivered++;
     } catch (err) {
-      if (err.statusCode === 404 || err.statusCode === 410)
+      const service = new URL(subscription.endpoint).host;
+      if (err.statusCode === 404 || err.statusCode === 410) {
         await PushSubscription.deleteOne({ _id: subscription._id }).exec();
-      else console.error(`Push to subscription ${subscription._id} failed:`, err.message);
+        result.errors.push(`${service}: subscription expired and was removed (switch it on again)`);
+      } else {
+        const detail = `${err.statusCode ?? ""} ${err.body || err.message}`.trim();
+        result.errors.push(`${service}: ${detail}`);
+        console.error(`Push to subscription ${subscription._id} failed:`, detail);
+      }
     }
   }
-  return delivered;
+  return result;
 };
 
-module.exports = { isPushConfigured, sendPushToUsers, vapid };
+/**
+ * Like sendPushDetailed, returning only how many notifications were delivered
+ */
+const sendPushToUsers = async (userIds, payload) =>
+  (await sendPushDetailed(userIds, payload)).delivered;
+
+module.exports = { isPushConfigured, sendPushToUsers, sendPushDetailed, vapid };
