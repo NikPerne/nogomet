@@ -19,7 +19,14 @@ const appUrl = () => {
 };
 
 const sendMail = async ({ to, toName, subject, text, html }) => {
-  const { BREVO_API_KEY, MAIL_FROM, MAIL_FROM_NAME } = process.env;
+  // Trimmed, since keys pasted into hosting dashboards often pick up stray whitespace
+  const BREVO_API_KEY = process.env.BREVO_API_KEY?.trim();
+  const MAIL_FROM = process.env.MAIL_FROM?.trim();
+  const { MAIL_FROM_NAME } = process.env;
+  if (BREVO_API_KEY?.startsWith("xsmtpsib-"))
+    throw new Error(
+      "BREVO_API_KEY is an SMTP key (xsmtpsib-...). Create an API key (xkeysib-...) under SMTP & API → API keys."
+    );
   if (!BREVO_API_KEY || !MAIL_FROM) {
     if (isProduction())
       throw new Error("Email is not configured (BREVO_API_KEY and MAIL_FROM).");
