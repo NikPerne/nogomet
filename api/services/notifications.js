@@ -69,49 +69,90 @@ const footer = {
 };
 
 /**
+ * Test mode: with NOTIFY_TEST_EMAIL set, every notification goes only to the user with that
+ * e-mail (even when they wouldn't normally get it), marked "[TEST]". Returns undefined when
+ * test mode is off, otherwise that user (or null when no account has the e-mail).
+ */
+const testRecipient = async () => {
+  const email = process.env.NOTIFY_TEST_EMAIL?.trim().toLowerCase();
+  if (!email) return undefined;
+  const users = await User.find().select("name email emailNotifications").exec();
+  return users.find((user) => user.email.toLowerCase() === email) ?? null;
+};
+
+/**
+ * Sends one notification to the recipients by email (unless they turned email off) and
+ * push, honouring test mode. `mail(user)` builds { subject, text, html }; `push` is
+ * { title, body, url }. Returns { emailsSent, pushesSent, testMode }.
+ */
+const deliver = async (recipients, { mail, push }) => {
+  const test = await testRecipient();
+  const testMode = test !== undefined;
+  const prefix = testMode ? "[TEST] " : "";
+  if (testMode) {
+    if (!test) console.log("Notifications test mode: no user has NOTIFY_TEST_EMAIL, nothing sent.");
+    recipients = test ? [test] : [];
+  }
+  const emailsSent = await sendToEach(recipients, (user) => {
+    const message = mail(user);
+    return { ...message, subject: prefix + message.subject };
+  });
+  const pushesSent = await sendPushToUsers(
+    recipients.map((user) => user._id),
+    { ...push, title: prefix + push.title }
+  );
+  return { emailsSent, pushesSent, testMode };
+};
+
+const modeLabel = (testMode) => (testMode ? " [test mode]" : "");
+
+/**
  * Tells everyone who said "Pridem" (not guests) that the event was cancelled: by email
  * (unless turned off) and by push to their subscribed devices
  */
 const notifyCancellation = async (event) => {
   const attending = event.signedup.filter((signup) => signup.attending && !signup.guestOf);
-  if (attending.length === 0) return 0;
-  const candidates = await User.find({
-    $or: [
-      { _id: { $in: attending.filter((s) => s.userId).map((s) => s.userId) } },
-      { name: { $in: attending.filter((s) => !s.userId).map((s) => s.name) } },
-    ],
-  })
-    .select("name email emailNotifications")
-    .exec();
+  const candidates =
+    attending.length === 0
+      ? []
+      : await User.find({
+          $or: [
+            { _id: { $in: attending.filter((s) => s.userId).map((s) => s.userId) } },
+            { name: { $in: attending.filter((s) => !s.userId).map((s) => s.name) } },
+          ],
+        })
+          .select("name email emailNotifications")
+          .exec();
   const recipients = candidates.filter((user) =>
     attending.some((signup) => isOwnSignup(signup, user))
   );
   const when = formatWhen(event.date);
   const reason = event.cancelReason ? `Razlog: ${event.cancelReason}` : "";
   const link = eventLink(event);
-  const sent = await sendToEach(recipients, (user) => ({
-    subject: `Odpovedano: ${event.name}, ${when}`,
-    text:
-      `Pozdravljen/a ${user.name},\n\n` +
-      `dogodek »${event.name}« (${when}) je odpovedan.\n${reason}\n\n${link}` +
-      footer.text,
-    html:
-      `<p>Pozdravljen/a ${escapeHtml(user.name)},</p>` +
-      `<p>dogodek <b>${escapeHtml(event.name)}</b> (${escapeHtml(when)}) je <b>odpovedan</b>.</p>` +
-      (reason ? `<p>${escapeHtml(reason)}</p>` : "") +
-      `<p><a href="${link}">Odpri dogodek</a></p>` +
-      footer.html,
-  }));
-  const pushed = await sendPushToUsers(
-    recipients.map((user) => user._id),
-    {
+  const { emailsSent, pushesSent, testMode } = await deliver(recipients, {
+    mail: (user) => ({
+      subject: `Odpovedano: ${event.name}, ${when}`,
+      text:
+        `Pozdravljen/a ${user.name},\n\n` +
+        `dogodek »${event.name}« (${when}) je odpovedan.\n${reason}\n\n${link}` +
+        footer.text,
+      html:
+        `<p>Pozdravljen/a ${escapeHtml(user.name)},</p>` +
+        `<p>dogodek <b>${escapeHtml(event.name)}</b> (${escapeHtml(when)}) je <b>odpovedan</b>.</p>` +
+        (reason ? `<p>${escapeHtml(reason)}</p>` : "") +
+        `<p><a href="${link}">Odpri dogodek</a></p>` +
+        footer.html,
+    }),
+    push: {
       title: `Odpovedano: ${event.name}`,
       body: `${when}${event.cancelReason ? ` – ${event.cancelReason}` : ""}`,
       url: `/events/${event._id}`,
-    }
+    },
+  });
+  console.log(
+    `Cancellation: ${emailsSent} email(s), ${pushesSent} push(es) for event ${event._id}${modeLabel(testMode)}.`
   );
-  console.log(`Cancellation: ${sent} email(s), ${pushed} push(es) for event ${event._id}.`);
-  return sent;
+  return emailsSent;
 };
 
 /**
@@ -148,24 +189,25 @@ const notifyNewEvent = async (event) => {
   const when = formatWhen(event.date);
   const link = eventLink(event);
   const limit = event.maxPlayers ? ` Največ igralcev: ${event.maxPlayers}.` : "";
-  const emailsSent = await sendToEach(recipients, (user) => ({
-    subject: `Nova tekma: ${event.name}, ${when}`,
-    text:
-      `Pozdravljen/a ${user.name},\n\n` +
-      `dodana je nova tekma »${event.name}« (${when}).${limit}\n` +
-      `Sporoči, ali prideš: ${link}` +
-      footer.text,
-    html:
-      `<p>Pozdravljen/a ${escapeHtml(user.name)},</p>` +
-      `<p>dodana je nova tekma <b>${escapeHtml(event.name)}</b> (${escapeHtml(when)}).${escapeHtml(limit)}</p>` +
-      `<p><a href="${link}">Pridem / Ne pridem</a></p>` +
-      footer.html,
-  }));
-  const pushesSent = await sendPushToUsers(
-    recipients.map((user) => user._id),
-    { title: `Nova tekma: ${event.name}`, body: when, url: `/events/${event._id}` }
+  const { emailsSent, pushesSent, testMode } = await deliver(recipients, {
+    mail: (user) => ({
+      subject: `Nova tekma: ${event.name}, ${when}`,
+      text:
+        `Pozdravljen/a ${user.name},\n\n` +
+        `dodana je nova tekma »${event.name}« (${when}).${limit}\n` +
+        `Sporoči, ali prideš: ${link}` +
+        footer.text,
+      html:
+        `<p>Pozdravljen/a ${escapeHtml(user.name)},</p>` +
+        `<p>dodana je nova tekma <b>${escapeHtml(event.name)}</b> (${escapeHtml(when)}).${escapeHtml(limit)}</p>` +
+        `<p><a href="${link}">Pridem / Ne pridem</a></p>` +
+        footer.html,
+    }),
+    push: { title: `Nova tekma: ${event.name}`, body: when, url: `/events/${event._id}` },
+  });
+  console.log(
+    `New event: ${emailsSent} email(s), ${pushesSent} push(es) for event ${event._id}${modeLabel(testMode)}.`
   );
-  console.log(`New event: ${emailsSent} email(s), ${pushesSent} push(es) for event ${event._id}.`);
   return { emailsSent, pushesSent };
 };
 
@@ -197,29 +239,32 @@ const sendReminders = async () => {
     const link = eventLink(event);
     const players = event.confirmedSignups().length;
     const count = event.maxPlayers ? `${players}/${event.maxPlayers}` : `${players}`;
-    emailsSent += await sendToEach(recipients, (user) => ({
-      subject: `Prideš? ${event.name}, ${when}`,
-      text:
-        `Pozdravljen/a ${user.name},\n\n` +
-        `za »${event.name}« (${when}) še nisi odgovoril/a. Prijavljenih: ${count}.\n` +
-        `Sporoči, ali prideš: ${link}` +
-        footer.text,
-      html:
-        `<p>Pozdravljen/a ${escapeHtml(user.name)},</p>` +
-        `<p>za <b>${escapeHtml(event.name)}</b> (${escapeHtml(when)}) še nisi odgovoril/a. ` +
-        `Prijavljenih: ${count}.</p>` +
-        `<p><a href="${link}">Pridem / Ne pridem</a></p>` +
-        footer.html,
-    }));
-    pushesSent += await sendPushToUsers(
-      recipients.map((user) => user._id),
-      {
+    const sent = await deliver(recipients, {
+      mail: (user) => ({
+        subject: `Prideš? ${event.name}, ${when}`,
+        text:
+          `Pozdravljen/a ${user.name},\n\n` +
+          `za »${event.name}« (${when}) še nisi odgovoril/a. Prijavljenih: ${count}.\n` +
+          `Sporoči, ali prideš: ${link}` +
+          footer.text,
+        html:
+          `<p>Pozdravljen/a ${escapeHtml(user.name)},</p>` +
+          `<p>za <b>${escapeHtml(event.name)}</b> (${escapeHtml(when)}) še nisi odgovoril/a. ` +
+          `Prijavljenih: ${count}.</p>` +
+          `<p><a href="${link}">Pridem / Ne pridem</a></p>` +
+          footer.html,
+      }),
+      push: {
         title: `Prideš? ${event.name}`,
         body: `${when} · prijavljenih ${count}`,
         url: `/events/${event._id}`,
-      }
+      },
+    });
+    emailsSent += sent.emailsSent;
+    pushesSent += sent.pushesSent;
+    console.log(
+      `Reminders: ${recipients.length} recipient(s) for event ${event._id}${modeLabel(sent.testMode)}.`
     );
-    console.log(`Reminders: ${recipients.length} recipient(s) for event ${event._id}.`);
   }
   return { events: events.length, emailsSent, pushesSent };
 };
