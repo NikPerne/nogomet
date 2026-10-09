@@ -18,6 +18,13 @@ const appUrl = () => {
   return `${protocol}://localhost:${process.env.PORT || 3000}`;
 };
 
+/**
+ * Emails that were printed instead of sent (no Brevo configuration, not production), newest
+ * last. Tests read it to check who got what.
+ */
+const outbox = [];
+const OUTBOX_SIZE = 100;
+
 const sendMail = async ({ to, toName, subject, text, html }) => {
   // Trimmed, since keys pasted into hosting dashboards often pick up stray whitespace
   const BREVO_API_KEY = process.env.BREVO_API_KEY?.trim();
@@ -31,6 +38,8 @@ const sendMail = async ({ to, toName, subject, text, html }) => {
     if (isProduction())
       throw new Error("Email is not configured (BREVO_API_KEY and MAIL_FROM).");
     console.log(`[mail] Not configured, printing instead.\nTo: ${to}\nSubject: ${subject}\n${text}`);
+    outbox.push({ to, subject, text });
+    if (outbox.length > OUTBOX_SIZE) outbox.shift();
     return;
   }
   const response = await fetch(BREVO_URL, {
@@ -55,4 +64,4 @@ const sendMail = async ({ to, toName, subject, text, html }) => {
 const escapeHtml = (text) =>
   String(text).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
-module.exports = { sendMail, appUrl, escapeHtml };
+module.exports = { sendMail, appUrl, escapeHtml, outbox };

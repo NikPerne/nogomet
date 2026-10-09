@@ -1,0 +1,38 @@
+# Runs the API tests and the Angular production build on every push and pull request.
+# A red X on GitHub means: don't deploy that commit to Render.
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            angular/package-lock.json
+
+      # The temporary MongoDB used by the tests is downloaded once and cached
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/mongodb-binaries
+          key: mongodb-binaries-7.0.14
+
+      - name: Install
+        run: |
+          npm ci
+          npm --prefix angular ci
+
+      - name: API tests
+        run: npm test
+
+      - name: Angular production build
+        run: npm --prefix angular run build-check

@@ -17,7 +17,10 @@ Nogomet is a small app for signing up to recreational football ("torkova rekreac
 - **Node**: `^22.22.3 || >=24.15.0` (Angular 22's requirement; see `engines`). On Render this is set by the `NODE_VERSION` environment variable.
 
 ```
-server.js                  Express app, Swagger setup, static Angular, error handler
+app.js                     Express app (Swagger, static Angular, routes, error handler); no DB, no listen
+server.js                  Startup: dotenv, database connect (api/models/db.js), listen (HTTP/HTTPS)
+test/api/                  API tests (node:test + supertest + in-memory MongoDB), helpers.js = harness
+.github/workflows/test.yml GitHub check: API tests + Angular production build on every push
 api/routes/api.js          All REST routes
 api/middleware/auth.js     `auth` (JWT + loads req.user from DB) and `adminOnly`
 api/controllers/           events.js, signup.js, users.js (stats), season.js, teams.js, mvp.js,
@@ -40,12 +43,18 @@ test/Demo.test.js          Selenium + mocha end-to-end tests (expects Docker set
 - `cd angular && npx ng build --configuration production`: quickest full type check (`strictTemplates` is on).
   - On a machine with little free virtual memory (Windows page file), the build can crash with "Zone Allocation failed" or "Not enough space". In that case, set `NG_BUILD_MAX_WORKERS=1` and `NG_BUILD_PARALLEL_TS=0` first.
   - With an older local Node, run the CLI through a temporary Node: `npx -p node@22 -- node node_modules/@angular/cli/bin/ng.js build`.
-- `npm test`: Selenium E2E tests. Needs the app running at `https://host.docker.internal:3000`, a Selenium server on `localhost:4445`, and the `web-dev-mongo-db` container (see `docker-compose.yml`). They target 2023 events that are now past, so the signup steps need updated test data.
+- **`npm test`**: API tests (`test/api/*.test.js`, Node's built-in test runner, one file at a time).
+  - Each file runs the real `app.js` against a temporary in-memory MongoDB 7.0 (`mongodb-memory-server`, downloaded once), and the database is emptied before each test. The real database and real emails are never touched.
+  - Emails are captured in `outbox` from `api/config/mail.js`: they are printed instead of sent when Brevo isn't configured, outside production.
+  - `test/api/helpers.js` provides `createUser`, `createAdmin` (promoted in the DB), `createEvent`, `moveEvent` (e.g. into the past after signups), `signUp`, `auth`, and `waitFor` for work done after the response.
+  - Add tests here when changing behaviour.
+- **`npm run check`**: `npm test` plus the Angular production build. Run it before deploying; GitHub runs the same on every push (`.github/workflows/test.yml`).
+- `npm run test:e2e`: old Selenium E2E tests. They need the Docker setup (`docker-compose.yml`) and target 2023 events that are now past, so the signup steps need updated test data.
 
 ## Environment (.env, not committed)
 
 - `JWT_SECRET` (required): signs and verifies tokens.
-- `NODE_ENV`: `production` → `MONGODB_ATLAS_URI`; `test` → `mongodb://web-dev-mongo-db/Demo`; otherwise `mongodb://127.0.0.1/Demo`.
+- `NODE_ENV`: `production` → `MONGODB_ATLAS_URI`; `test` → `mongodb://web-dev-mongo-db/Demo`; otherwise `mongodb://127.0.0.1/Demo`. `MONGODB_URI`, when set, overrides all of these.
 - `SEASON_FEE_EUR`: season membership fee, default 80.
 - `APP_URL`: public base URL used in emailed links, e.g. `https://nogomet.onrender.com`. **Required in production**, and never derived from the request's Host header.
 - `BREVO_API_KEY`, `MAIL_FROM` (a sender verified in Brevo), optional `MAIL_FROM_NAME`: email via the Brevo HTTP API (`api/config/mail.js`). Without them, emails are printed to the console outside production; in production the send fails and is only logged.
