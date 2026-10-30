@@ -152,6 +152,8 @@ test/Demo.test.js          Selenium + mocha end-to-end tests (expects Docker set
   - "Koledar", which downloads an `.ics` file built in `shared/classes/calendar.ts`. Events without a time become all-day events, and timed ones last 90 minutes.
 - Sharing goes through `ShareService` (`navigator.share`, falling back to the clipboard).
 - **Dark mode** follows the device. An inline script in `index.html` sets `data-bs-theme` before the app starts, and `ThemeService` (started by `FrameworkComponent`) keeps it in sync and exposes an `isDark` signal; the sidebar chart uses it.
+  - Sandstone keeps its dark primary (`#325d88`) in dark mode, which is unreadable on the dark page. `src/styles.css` overrides `--bs-primary*` / `--bs-link-*` and the `.btn-primary`, `.btn-outline-primary` and `.btn-outline-secondary` variables under `[data-bs-theme="dark"]`, tuned for WCAG contrast. Prefer these button styles, and check both themes when adding colours.
+  - Pridem / Ne pridem: the current answer is a solid `btn-primary` (`isCurrentAnswer`), the other an outline button. They are disabled only when signups are closed or the device is offline (`canChangeAnswer`).
   - Use theme-aware Bootstrap classes (`bg-body-tertiary`, `text-body`, `link-body-emphasis`, `*-text-emphasis` variables), never `bg-light`, `text-dark` or hard-coded colours, except badges on coloured backgrounds.
 - `VENUE` (`shared/classes/venue.ts`) holds the pitch name, coordinates and time zone, used by the map, calendar files and weather.
 - Weather: `EventWeatherComponent` (`app-event-weather`) shows the Open-Meteo forecast (free, no key, called from the browser by `WeatherService`) for the kick-off hour. It appears only for upcoming, non-cancelled events within 14 days, and fails silently.

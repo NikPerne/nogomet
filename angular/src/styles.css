@@ -10,3 +10,62 @@
 .nepridem-text {
   color: var(--bs-danger-text-emphasis);
 }
+
+/*
+ * Dark mode: the Sandstone theme keeps its dark slate-blue primary (#325d88) in dark mode,
+ * which almost disappears on the dark background. Lighter blues with enough contrast
+ * (WCAG: white text on solid buttons ~4.9:1, outline buttons and links on the page ~7:1).
+ * Light mode is unchanged.
+ */
+[data-bs-theme="dark"] {
+  --bs-primary: #8fb4e0;
+  --bs-primary-rgb: 143, 180, 224;
+  --bs-primary-text-emphasis: #b3cdeb;
+  --bs-link-color: #8fb4e0;
+  --bs-link-color-rgb: 143, 180, 224;
+  --bs-link-hover-color: #b3cdeb;
+  --bs-link-hover-color-rgb: 179, 205, 235;
+}
+
+[data-bs-theme="dark"] .btn-primary {
+  --bs-btn-bg: #4874a3;
+  --bs-btn-border-color: #4874a3;
+  --bs-btn-hover-bg: #5683b3;
+  --bs-btn-hover-border-color: #5683b3;
+  --bs-btn-active-bg: #5d8bbb;
+  --bs-btn-active-border-color: #5d8bbb;
+  --bs-btn-disabled-bg: #4874a3;
+  --bs-btn-disabled-border-color: #4874a3;
+}
+
+[data-bs-theme="dark"] .btn-outline-primary {
+  --bs-btn-color: #8fb4e0;
+  --bs-btn-border-color: #8fb4e0;
+  --bs-btn-hover-color: #16191c;
+  --bs-btn-hover-bg: #8fb4e0;
+  --bs-btn-hover-border-color: #8fb4e0;
+  --bs-btn-active-color: #16191c;
+  --bs-btn-active-bg: #8fb4e0;
+  --bs-btn-active-border-color: #8fb4e0;
+  --bs-btn-disabled-color: #8fb4e0;
+  --bs-btn-disabled-border-color: #8fb4e0;
+}
+
+[data-bs-theme="dark"] .btn-outline-secondary {
+  --bs-btn-color: #d2cdc2;
+  --bs-btn-border-color: #a8a59c;
+  --bs-btn-hover-color: #16191c;
+  --bs-btn-hover-bg: #d2cdc2;
+  --bs-btn-hover-border-color: #d2cdc2;
+  --bs-btn-active-color: #16191c;
+  --bs-btn-active-bg: #d2cdc2;
+  --bs-btn-active-border-color: #d2cdc2;
+  --bs-btn-disabled-color: #a8a59c;
+  --bs-btn-disabled-border-color: #a8a59c;
+}
+
+/* Disabled buttons stay recognisable in dark mode (Bootstrap fades them to 65 %) */
+[data-bs-theme="dark"] .btn:disabled,
+[data-bs-theme="dark"] .btn.disabled {
+  --bs-btn-disabled-opacity: 0.5;
+}

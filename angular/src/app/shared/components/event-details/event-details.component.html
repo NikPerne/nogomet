@@ -242,23 +242,35 @@
           – lahko ga spremeniš</small
         >
       }
+      <!-- The current answer is highlighted (solid); the other one is an outline button -->
       <button
         type="button"
-        class="btn btn-sm btn-primary"
+        class="btn btn-sm"
+        [ngClass]="isCurrentAnswer(true) ? 'btn-primary' : 'btn-outline-primary'"
+        [attr.aria-pressed]="isCurrentAnswer(true)"
         (click)="answer(true)"
-        [disabled]="!canAnswer(true)"
+        [disabled]="!canChangeAnswer"
         [title]="joinsWaitlist ? 'Dogodek je poln, prišel boš na čakalno listo' : ''"
       >
-        <i class="fa-regular fa-circle-check me-2"></i
+        <i
+          class="fa-circle-check me-2"
+          [ngClass]="isCurrentAnswer(true) ? 'fa-solid' : 'fa-regular'"
+        ></i
         >{{ joinsWaitlist ? "Pridem (rezerva)" : "Pridem" }}
       </button>
       <button
         type="button"
-        class="btn btn-sm btn-primary"
+        class="btn btn-sm"
+        [ngClass]="isCurrentAnswer(false) ? 'btn-primary' : 'btn-outline-primary'"
+        [attr.aria-pressed]="isCurrentAnswer(false)"
         (click)="answer(false)"
-        [disabled]="!canAnswer(false)"
+        [disabled]="!canChangeAnswer"
       >
-        <i class="fa-regular fa-circle-xmark me-2"></i>Ne pridem
+        <i
+          class="fa-circle-xmark me-2"
+          [ngClass]="isCurrentAnswer(false) ? 'fa-solid' : 'fa-regular'"
+        ></i
+        >Ne pridem
       </button>
     </div>
     <form class="col-md-8 d-flex gap-2 align-items-center mt-2" (ngSubmit)="addGuest()">

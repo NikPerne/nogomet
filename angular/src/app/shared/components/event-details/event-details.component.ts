@@ -159,16 +159,26 @@ export class EventDetailsComponent implements OnInit, OnChanges {
     return this.authenticationService.getCurrentUser()?.admin ?? false;
   }
 
-  public canAnswer(attending: boolean): boolean {
-    if (this.signupsClosed || !this.isConnected()) return false;
+  /**
+   * Answers can be given or changed while signups are open and the device is online
+   */
+  public get canChangeAnswer(): boolean {
+    return !this.signupsClosed && this.isConnected();
+  }
+
+  /**
+   * Whether this is the user's current answer (shown highlighted)
+   */
+  public isCurrentAnswer(attending: boolean): boolean {
     const own = this.ownSignup;
-    return !own || !!own.attending !== attending;
+    return !!own && !!own.attending === attending;
   }
 
   /**
    * Signs up, or changes the answer when the user has already signed up
    */
   protected answer(attending: boolean): void {
+    if (this.isCurrentAnswer(attending)) return; // already the answer, nothing to change
     this.clearMessages();
     const own = this.ownSignup;
     const note = this.noteDraft.trim();
