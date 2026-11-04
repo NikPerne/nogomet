@@ -11,6 +11,7 @@ import {
   hasTimeOfDay,
   isEventFull,
   isEventPast,
+  isNextEventOver,
 } from "../../classes/event";
 
 const MAX_EVENTS = 1000;
@@ -52,10 +53,11 @@ export class EventListComponent implements OnInit {
   }
 
   /**
-   * The next event that will actually take place (cancelled events are skipped)
+   * The next event that will actually take place (cancelled and finished events are skipped;
+   * a finished event stays in the list for the 24 h that signups remain open)
    */
   protected get nextEvent(): Event | undefined {
-    return this.upcomingEvents.find((event) => !event.cancelled);
+    return this.upcomingEvents.find((event) => !event.cancelled && !isNextEventOver(event));
   }
 
   protected get visiblePastEvents(): Event[] {

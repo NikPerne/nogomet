@@ -118,3 +118,15 @@ export const hasTimeOfDay = (event: Event): boolean => {
   const date = new Date(event.date);
   return date.getHours() !== 0 || date.getMinutes() !== 0;
 };
+
+/** A match stays the "next" one for 2 h after kick-off (1 h of play, then 1 h more) */
+const NEXT_EVENT_MS = 2 * 60 * 60 * 1000;
+
+/**
+ * Whether the list should move on to the following match; events without a time of day
+ * count until the end of that day
+ */
+export const isNextEventOver = (event: Event): boolean =>
+  hasTimeOfDay(event)
+    ? new Date(event.date).getTime() + NEXT_EVENT_MS <= Date.now()
+    : isEventPast(event);
