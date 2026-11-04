@@ -57,7 +57,9 @@ export class EventListComponent implements OnInit {
    * a finished event stays in the list for the 24 h that signups remain open)
    */
   protected get nextEvent(): Event | undefined {
-    return this.upcomingEvents.find((event) => !event.cancelled && !isNextEventOver(event));
+    return [...this.upcomingEvents]
+      .reverse()
+      .find((event) => !event.cancelled && !isNextEventOver(event));
   }
 
   protected get visiblePastEvents(): Event[] {
@@ -82,12 +84,12 @@ export class EventListComponent implements OnInit {
   }
 
   /**
-   * Upcoming events are shown soonest first, past events most recent first
+   * Both lists are shown with the latest date first
    */
   private setEvents(events: Event[]): void {
     this.upcomingEvents = events
       .filter((event) => !isEventPast(event))
-      .sort((a, b) => eventTime(a) - eventTime(b));
+      .sort((a, b) => eventTime(b) - eventTime(a));
     this.pastEvents = events
       .filter((event) => isEventPast(event))
       .sort((a, b) => eventTime(b) - eventTime(a));
