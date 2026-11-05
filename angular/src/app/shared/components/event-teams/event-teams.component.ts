@@ -75,8 +75,10 @@ export class EventTeamsComponent implements OnChanges {
   @Output() eventChange = new EventEmitter<Event>();
 
   protected readonly teamsMeta = TEAMS;
-  /** Unsaved shuffle; shown instead of the saved teams until saved or discarded */
+  /** Unsaved shuffle or selection; shown instead of the saved teams until saved or discarded */
   protected preview: Teams | null = null;
+  /** The admin is picking players by hand; the picks go straight into the preview */
+  protected editing = false;
   protected scoreDraft: Partial<Record<TeamKey, number | null>> = {};
   protected errorMessage = "";
   protected infoMessage = "";
@@ -85,6 +87,7 @@ export class EventTeamsComponent implements OnChanges {
     if (changes["event"]) {
       // Signups or saved teams changed, so an old preview could list stale players
       this.preview = null;
+      this.editing = false;
       this.scoreDraft = { ...(this.event?.score ?? {}) };
     }
   }
@@ -187,6 +190,49 @@ export class EventTeamsComponent implements OnChanges {
 
   protected discardPreview(): void {
     this.preview = null;
+    this.editing = false;
+  }
+
+  /**
+   * Starts picking by hand from the current preview or the saved teams, keeping only players
+   * who are still confirmed, or from empty teams
+   */
+  protected startEditing(): void {
+    this.clearMessages();
+    const confirmedKeys = this.confirmed.map((signup) => playerKey(toTeamPlayer(signup)));
+    const start = this.shown;
+    const keep = (team: TeamKey) =>
+      (start?.[team] ?? []).filter((player) => confirmedKeys.includes(playerKey(player)));
+    this.preview = { rumeni: keep("rumeni"), rdeci: keep("rdeci") };
+    this.editing = true;
+  }
+
+  protected teamOf(signup: Signup): TeamKey | undefined {
+    const key = playerKey(toTeamPlayer(signup));
+    return TEAMS.find((team) => this.preview?.[team.key].some((p) => playerKey(p) === key))?.key;
+  }
+
+  /**
+   * Puts the player in the team; choosing their current team again takes them out of it
+   */
+  protected pick(signup: Signup, team: TeamKey): void {
+    if (!this.preview) return;
+    const player = toTeamPlayer(signup);
+    const key = playerKey(player);
+    const current = this.teamOf(signup);
+    const without = (players: TeamPlayer[]) => players.filter((p) => playerKey(p) !== key);
+    this.preview = { rumeni: without(this.preview.rumeni), rdeci: without(this.preview.rdeci) };
+    if (current !== team) this.preview[team].push(player);
+  }
+
+  /** Confirmed players not yet in a team while picking by hand */
+  protected get unassignedCount(): number {
+    return this.confirmed.filter((signup) => !this.teamOf(signup)).length;
+  }
+
+  /** Both teams need at least one player */
+  protected get canSave(): boolean {
+    return !!this.preview && TEAMS.every((team) => this.preview![team.key].length > 0);
   }
 
   protected save(): void {

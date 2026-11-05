@@ -145,6 +145,7 @@ test/Demo.test.js          Selenium + mocha end-to-end tests (expects Docker set
   - an optional signup note input,
   - "Dodaj gosta" (add guest),
   - the teams card, `EventTeamsComponent` (`app-event-teams`). Anyone can shuffle a local preview of confirmed players (non-admins only while nothing is saved). Admins "Shrani za vse", enter the score, or remove both. It has its own "Deli ekipe" button.
+    - Admins can also pick by hand ("Izberi ekipe" / "Uredi ekipe"): each confirmed player gets Rumeni / Rdeči buttons that edit the same unsaved preview, so it can start from a shuffle. Players can be left out, and both teams need at least one player to save. The "don't match the signups" warning then also shows for deliberately left-out players.
     - The split is **balanced**. Each player's rating is `(wins + ½·draws + 1) / (games + 2)`, so guests and new players get 0.5. Players go strongest first, each into the weaker team that has room, with a small random jitter so reshuffles differ.
   - the player-of-the-match card, `EventMvpComponent` (`app-event-mvp`).
   - "Še niso odgovorili": regulars (`gamesPlayed > 0` in `GET /api/users`) without an own signup on an open event, with an "Opomni" reminder share,

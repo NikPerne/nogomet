@@ -11,6 +11,11 @@
             >{{ shown ? "Premešaj" : "Razdeli ekipe" }}
           </button>
         }
+        @if (isAdmin() && confirmed.length >= 2 && !editing) {
+          <button type="button" class="btn btn-sm btn-outline-primary m-0" (click)="startEditing()">
+            <i class="fa-solid fa-user-check me-1"></i>{{ shown ? "Uredi ekipe" : "Izberi ekipe" }}
+          </button>
+        }
         @if (shown) {
           <button type="button" class="btn btn-sm btn-outline-success m-0" (click)="share()">
             <i class="fa-solid fa-share-nodes me-1"></i>Deli ekipe
@@ -37,23 +42,57 @@
               <button
                 type="button"
                 class="btn btn-sm btn-primary m-0"
-                [disabled]="!isConnected()"
+                [disabled]="!isConnected() || !canSave"
                 (click)="save()"
               >
                 <i class="fa-regular fa-floppy-disk me-1"></i>Shrani za vse
               </button>
-              @if (event.teams) {
+              @if (event.teams || editing) {
                 <button type="button" class="btn btn-sm btn-link m-0" (click)="discardPreview()">
-                  Nazaj na shranjene
+                  {{ event.teams ? "Nazaj na shranjene" : "Prekliči" }}
                 </button>
               }
             }
           </div>
         }
+        @if (editing) {
+          <div class="mb-3">
+            <div class="small text-secondary mb-2">
+              Izberi ekipo za vsakega igralca.
+              @if (unassignedCount > 0) {
+                <span>Brez ekipe: {{ unassignedCount }}</span>
+              }
+            </div>
+            @for (signup of confirmed; track signup) {
+              <div class="d-flex justify-content-between align-items-center gap-2 mb-1">
+                <span class="text-break" style="min-width: 0"
+                  >{{ signup.name }}
+                  @if (signup.guestOf) {
+                    <small class="text-secondary">(gost)</small>
+                  }
+                </span>
+                <span class="d-flex gap-1 flex-shrink-0">
+                  @for (team of teamsMeta; track team) {
+                    <button
+                      type="button"
+                      class="btn btn-sm m-0"
+                      [ngClass]="teamOf(signup) === team.key ? 'btn-primary' : 'btn-outline-secondary'"
+                      [attr.aria-pressed]="teamOf(signup) === team.key"
+                      (click)="pick(signup, team.key)"
+                    >
+                      <span class="team-dot me-1" [style.background]="team.color"></span
+                      >{{ team.label }}
+                    </button>
+                  }
+                </span>
+              </div>
+            }
+          </div>
+        }
         @if (outdated && isAdmin()) {
           <div class="alert alert-warning p-2 small">
-            <i class="fa-solid fa-triangle-exclamation pe-1"></i>Prijave so se spremenile, odkar so
-            bile ekipe shranjene. Premešaj in shrani znova.
+            <i class="fa-solid fa-triangle-exclamation pe-1"></i>Ekipe se ne ujemajo s trenutnimi
+            prijavami. Uredi ali premešaj in shrani znova.
           </div>
         }
         @if (event.score && !preview) {
